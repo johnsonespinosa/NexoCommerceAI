@@ -1,8 +1,8 @@
-namespace NexoCommerceAI.Application.Features.Auth.DTOs;
+namespace NexoCommerceAI.Application.Features.Auth.Models;
 
 public record RegisterRequest(
-    string Email,
     string UserName,
+    string Email,
     string Password,
     string ConfirmPassword
 );

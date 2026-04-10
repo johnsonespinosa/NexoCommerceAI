@@ -1,1 +1,93 @@
 2026-04-04 16:44:49.591 -04:00 [DBG] Registered model binder providers, in the following order: ["Microsoft.AspNetCore.Mvc.Versioning.ApiVersionModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.BinderTypeModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.ServicesModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.BodyModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.HeaderModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.FloatingPointTypeModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.EnumTypeModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.DateTimeModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.SimpleTypeModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.TryParseModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.CancellationTokenModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.ByteArrayModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.FormFileModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.FormCollectionModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.KeyValuePairModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.DictionaryModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.ArrayModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.CollectionModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.ComplexObjectModelBinderProvider"]
+2026-04-04 16:55:20.130 -04:00 [DBG] Registered model binder providers, in the following order: ["Microsoft.AspNetCore.Mvc.Versioning.ApiVersionModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.BinderTypeModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.ServicesModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.BodyModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.HeaderModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.FloatingPointTypeModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.EnumTypeModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.DateTimeModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.SimpleTypeModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.TryParseModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.CancellationTokenModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.ByteArrayModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.FormFileModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.FormCollectionModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.KeyValuePairModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.DictionaryModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.ArrayModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.CollectionModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.ComplexObjectModelBinderProvider"]
+2026-04-04 16:55:24.203 -04:00 [INF] User profile is available. Using 'C:\Users\johnson\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-04-04 16:55:24.226 -04:00 [DBG] Reading data from file 'C:\Users\johnson\AppData\Local\ASP.NET\DataProtection-Keys\key-18c779a5-0b0a-4f9b-8b62-2d73e2713224.xml'.
+2026-04-04 16:55:24.267 -04:00 [DBG] Reading data from file 'C:\Users\johnson\AppData\Local\ASP.NET\DataProtection-Keys\key-c4a54b25-33ed-4195-8386-e3d4a41d8a77.xml'.
+2026-04-04 16:55:24.296 -04:00 [DBG] Reading data from file 'C:\Users\johnson\AppData\Local\ASP.NET\DataProtection-Keys\key-f26c27d7-ecef-48ff-a95f-8028765eacca.xml'.
+2026-04-04 16:55:24.335 -04:00 [DBG] Found key {18c779a5-0b0a-4f9b-8b62-2d73e2713224}.
+2026-04-04 16:55:24.343 -04:00 [DBG] Found key {c4a54b25-33ed-4195-8386-e3d4a41d8a77}.
+2026-04-04 16:55:24.343 -04:00 [DBG] Found key {f26c27d7-ecef-48ff-a95f-8028765eacca}.
+2026-04-04 16:55:24.361 -04:00 [DBG] Considering key {f26c27d7-ecef-48ff-a95f-8028765eacca} with expiration date 2026-06-24 15:01:08Z as default key.
+2026-04-04 16:55:24.367 -04:00 [DBG] Forwarded activator type request from Microsoft.AspNetCore.DataProtection.XmlEncryption.DpapiXmlDecryptor, Microsoft.AspNetCore.DataProtection, Version=8.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60 to Microsoft.AspNetCore.DataProtection.XmlEncryption.DpapiXmlDecryptor, Microsoft.AspNetCore.DataProtection, Culture=neutral, PublicKeyToken=adb9793829ddae60
+2026-04-04 16:55:24.372 -04:00 [DBG] Decrypting secret element using Windows DPAPI.
+2026-04-04 16:55:24.374 -04:00 [DBG] Forwarded activator type request from Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel.AuthenticatedEncryptorDescriptorDeserializer, Microsoft.AspNetCore.DataProtection, Version=8.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60 to Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel.AuthenticatedEncryptorDescriptorDeserializer, Microsoft.AspNetCore.DataProtection, Culture=neutral, PublicKeyToken=adb9793829ddae60
+2026-04-04 16:55:24.382 -04:00 [DBG] Opening CNG algorithm 'AES' from provider 'null' with chaining mode CBC.
+2026-04-04 16:55:24.383 -04:00 [DBG] Opening CNG algorithm 'SHA256' from provider 'null' with HMAC.
+2026-04-04 16:55:24.385 -04:00 [DBG] Using key {f26c27d7-ecef-48ff-a95f-8028765eacca} as the default key.
+2026-04-04 16:55:24.387 -04:00 [DBG] Key ring with default key {f26c27d7-ecef-48ff-a95f-8028765eacca} was loaded during application startup.
+2026-04-04 16:55:24.552 -04:00 [DBG] Loaded hosting startup assembly NexoCommerceAI.Api
+2026-04-04 16:55:24.552 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-04-04 16:55:24.553 -04:00 [INF] Hosting environment: Development
+2026-04-04 16:55:24.553 -04:00 [INF] Content root path: C:\Users\johnson\Desktop\Roadmap 2026\NexoCommerceAI\NexoCommerceAI\NexoCommerceAI.Api
+2026-04-04 16:55:24.600 -04:00 [INF] Request starting HTTP/2 GET https://localhost:44366/weatherforecast - null null
+2026-04-04 16:55:24.607 -04:00 [DBG] Wildcard detected, all requests with hosts will be allowed.
+2026-04-04 16:55:24.647 -04:00 [DBG] No candidates found for the request path '/weatherforecast'
+2026-04-04 16:55:24.648 -04:00 [DBG] Request did not match any endpoints
+2026-04-04 16:55:24.681 -04:00 [DBG] The request path /weatherforecast does not match a supported file type
+2026-04-04 16:55:24.819 -04:00 [DBG] AuthenticationScheme: Bearer was not authenticated.
+2026-04-04 16:55:24.826 -04:00 [INF] HTTP GET /weatherforecast responded 404 in 139.4964 ms
+2026-04-04 16:55:24.861 -04:00 [DBG] Connection ID "18302628903618871299" disconnecting.
+2026-04-04 16:55:24.863 -04:00 [INF] Request finished HTTP/2 GET https://localhost:44366/weatherforecast - 404 null null 271.0688ms
+2026-04-04 16:55:24.867 -04:00 [INF] Request reached the end of the middleware pipeline without being handled by application code. Request path: GET https://localhost:44366/weatherforecast, Response status code: 404
+2026-04-04 16:55:50.598 -04:00 [INF] Application is shutting down...
+2026-04-04 16:56:06.190 -04:00 [DBG] Registered model binder providers, in the following order: ["Microsoft.AspNetCore.Mvc.Versioning.ApiVersionModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.BinderTypeModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.ServicesModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.BodyModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.HeaderModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.FloatingPointTypeModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.EnumTypeModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.DateTimeModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.SimpleTypeModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.TryParseModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.CancellationTokenModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.ByteArrayModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.FormFileModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.FormCollectionModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.KeyValuePairModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.DictionaryModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.ArrayModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.CollectionModelBinderProvider","Microsoft.AspNetCore.Mvc.ModelBinding.Binders.ComplexObjectModelBinderProvider"]
+2026-04-04 16:56:09.979 -04:00 [INF] User profile is available. Using 'C:\Users\johnson\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-04-04 16:56:09.996 -04:00 [DBG] Reading data from file 'C:\Users\johnson\AppData\Local\ASP.NET\DataProtection-Keys\key-18c779a5-0b0a-4f9b-8b62-2d73e2713224.xml'.
+2026-04-04 16:56:10.005 -04:00 [DBG] Reading data from file 'C:\Users\johnson\AppData\Local\ASP.NET\DataProtection-Keys\key-c4a54b25-33ed-4195-8386-e3d4a41d8a77.xml'.
+2026-04-04 16:56:10.006 -04:00 [DBG] Reading data from file 'C:\Users\johnson\AppData\Local\ASP.NET\DataProtection-Keys\key-f26c27d7-ecef-48ff-a95f-8028765eacca.xml'.
+2026-04-04 16:56:10.015 -04:00 [DBG] Found key {18c779a5-0b0a-4f9b-8b62-2d73e2713224}.
+2026-04-04 16:56:10.022 -04:00 [DBG] Found key {c4a54b25-33ed-4195-8386-e3d4a41d8a77}.
+2026-04-04 16:56:10.022 -04:00 [DBG] Found key {f26c27d7-ecef-48ff-a95f-8028765eacca}.
+2026-04-04 16:56:10.036 -04:00 [DBG] Considering key {f26c27d7-ecef-48ff-a95f-8028765eacca} with expiration date 2026-06-24 15:01:08Z as default key.
+2026-04-04 16:56:10.042 -04:00 [DBG] Forwarded activator type request from Microsoft.AspNetCore.DataProtection.XmlEncryption.DpapiXmlDecryptor, Microsoft.AspNetCore.DataProtection, Version=8.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60 to Microsoft.AspNetCore.DataProtection.XmlEncryption.DpapiXmlDecryptor, Microsoft.AspNetCore.DataProtection, Culture=neutral, PublicKeyToken=adb9793829ddae60
+2026-04-04 16:56:10.046 -04:00 [DBG] Decrypting secret element using Windows DPAPI.
+2026-04-04 16:56:10.047 -04:00 [DBG] Forwarded activator type request from Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel.AuthenticatedEncryptorDescriptorDeserializer, Microsoft.AspNetCore.DataProtection, Version=8.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60 to Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel.AuthenticatedEncryptorDescriptorDeserializer, Microsoft.AspNetCore.DataProtection, Culture=neutral, PublicKeyToken=adb9793829ddae60
+2026-04-04 16:56:10.052 -04:00 [DBG] Opening CNG algorithm 'AES' from provider 'null' with chaining mode CBC.
+2026-04-04 16:56:10.054 -04:00 [DBG] Opening CNG algorithm 'SHA256' from provider 'null' with HMAC.
+2026-04-04 16:56:10.056 -04:00 [DBG] Using key {f26c27d7-ecef-48ff-a95f-8028765eacca} as the default key.
+2026-04-04 16:56:10.057 -04:00 [DBG] Key ring with default key {f26c27d7-ecef-48ff-a95f-8028765eacca} was loaded during application startup.
+2026-04-04 16:56:10.129 -04:00 [DBG] Loaded hosting startup assembly NexoCommerceAI.Api
+2026-04-04 16:56:10.130 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-04-04 16:56:10.130 -04:00 [INF] Hosting environment: Development
+2026-04-04 16:56:10.130 -04:00 [INF] Content root path: C:\Users\johnson\Desktop\Roadmap 2026\NexoCommerceAI\NexoCommerceAI\NexoCommerceAI.Api
+2026-04-04 16:56:10.161 -04:00 [INF] Request starting HTTP/2 GET https://localhost:44326/ - null null
+2026-04-04 16:56:10.165 -04:00 [DBG] Wildcard detected, all requests with hosts will be allowed.
+2026-04-04 16:56:10.199 -04:00 [DBG] No candidates found for the request path '/'
+2026-04-04 16:56:10.199 -04:00 [DBG] Request did not match any endpoints
+2026-04-04 16:56:10.250 -04:00 [DBG] Connection ID "18374686506246733828" disconnecting.
+2026-04-04 16:56:10.262 -04:00 [INF] Request starting HTTP/2 GET https://localhost:44326/index.html - null null
+2026-04-04 16:56:10.263 -04:00 [DBG] No candidates found for the request path '/index.html'
+2026-04-04 16:56:10.263 -04:00 [DBG] Request did not match any endpoints
+2026-04-04 16:56:10.259 -04:00 [INF] Request finished HTTP/2 GET https://localhost:44326/ - 301 null null 108.588ms
+2026-04-04 16:56:10.415 -04:00 [DBG] Connection ID "18374686501951766531" disconnecting.
+2026-04-04 16:56:10.415 -04:00 [INF] Request finished HTTP/2 GET https://localhost:44326/index.html - 200 null text/html;charset=utf-8 152.1469ms
+2026-04-04 16:56:10.469 -04:00 [INF] Request starting HTTP/2 GET https://localhost:44326/swagger-ui.css - null null
+2026-04-04 16:56:10.469 -04:00 [DBG] No candidates found for the request path '/swagger-ui.css'
+2026-04-04 16:56:10.470 -04:00 [DBG] Request did not match any endpoints
+2026-04-04 16:56:10.472 -04:00 [INF] Request starting HTTP/2 GET https://localhost:44326/swagger-ui-bundle.js - null null
+2026-04-04 16:56:10.472 -04:00 [DBG] No candidates found for the request path '/swagger-ui-bundle.js'
+2026-04-04 16:56:10.472 -04:00 [DBG] Request did not match any endpoints
+2026-04-04 16:56:10.473 -04:00 [INF] Request starting HTTP/2 GET https://localhost:44326/swagger-ui-standalone-preset.js - null null
+2026-04-04 16:56:10.473 -04:00 [DBG] No candidates found for the request path '/swagger-ui-standalone-preset.js'
+2026-04-04 16:56:10.473 -04:00 [DBG] Request did not match any endpoints
+2026-04-04 16:56:10.507 -04:00 [INF] Sending file. Request path: '/swagger-ui.css'. Physical path: 'N/A'
+2026-04-04 16:56:10.508 -04:00 [INF] Sending file. Request path: '/swagger-ui-standalone-preset.js'. Physical path: 'N/A'
+2026-04-04 16:56:10.510 -04:00 [DBG] Connection ID "18374686510541701125" disconnecting.
+2026-04-04 16:56:10.515 -04:00 [DBG] Connection ID "18158513715543015425" disconnecting.
+2026-04-04 16:56:10.518 -04:00 [INF] Request finished HTTP/2 GET https://localhost:44326/swagger-ui-standalone-preset.js - 200 230280 text/javascript 45.1135ms
+2026-04-04 16:56:10.518 -04:00 [INF] Request finished HTTP/2 GET https://localhost:44326/swagger-ui.css - 200 152034 text/css 49.9788ms
+2026-04-04 16:56:10.543 -04:00 [INF] Sending file. Request path: '/swagger-ui-bundle.js'. Physical path: 'N/A'
+2026-04-04 16:56:10.584 -04:00 [DBG] Connection ID "18374686489066864646" disconnecting.
+2026-04-04 16:56:10.584 -04:00 [INF] Request finished HTTP/2 GET https://localhost:44326/swagger-ui-bundle.js - 200 1456926 text/javascript 112.691ms
+2026-04-04 16:56:11.015 -04:00 [INF] Request starting HTTP/2 GET https://localhost:44326/swagger/v1/swagger.json - null null
+2026-04-04 16:56:11.015 -04:00 [DBG] No candidates found for the request path '/swagger/v1/swagger.json'
+2026-04-04 16:56:11.015 -04:00 [DBG] Request did not match any endpoints
+2026-04-04 16:56:11.069 -04:00 [INF] Request starting HTTP/2 GET https://localhost:44326/favicon-32x32.png - null null
+2026-04-04 16:56:11.069 -04:00 [DBG] No candidates found for the request path '/favicon-32x32.png'
+2026-04-04 16:56:11.070 -04:00 [DBG] Request did not match any endpoints
+2026-04-04 16:56:11.071 -04:00 [INF] Sending file. Request path: '/favicon-32x32.png'. Physical path: 'N/A'
+2026-04-04 16:56:11.071 -04:00 [DBG] Connection ID "18374686501951766533" disconnecting.
+2026-04-04 16:56:11.071 -04:00 [INF] Request finished HTTP/2 GET https://localhost:44326/favicon-32x32.png - 200 628 image/png 3.5639ms
+2026-04-04 16:56:11.292 -04:00 [DBG] Connection ID "18374686493361831937" disconnecting.
+2026-04-04 16:56:11.292 -04:00 [INF] Request finished HTTP/2 GET https://localhost:44326/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 277.5906ms
+2026-04-04 16:57:06.673 -04:00 [INF] Application is shutting down...

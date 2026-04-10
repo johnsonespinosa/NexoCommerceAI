@@ -1,4 +1,4 @@
-namespace NexoCommerceAI.Application.Features.Categories.DTOs;
+namespace NexoCommerceAI.Application.Features.Categories.Models;
 
 public class CategoryStockSummary
 {

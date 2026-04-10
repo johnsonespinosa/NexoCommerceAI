@@ -1,4 +1,4 @@
-namespace NexoCommerceAI.Application.Features.Products.Dtos;
+namespace NexoCommerceAI.Application.Features.Products.Models;
 
 public class ProductDetailDto
 {

@@ -1,0 +1,20 @@
+2026-04-07 08:25:35.896 -04:00 [WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2026-04-07 08:26:17.017 -04:00 [WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2026-04-07 08:26:40.723 -04:00 [WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2026-04-07 08:26:45.852 -04:00 [ERR] Failed executing DbCommand (14ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE "Categories" (
+    "Id" uuid NOT NULL DEFAULT (NEWID()),
+    "Name" character varying(100) NOT NULL,
+    "Slug" character varying(100) NOT NULL,
+    "CreatedAt" timestamp with time zone NOT NULL DEFAULT (GETUTCDATE()),
+    "CreatedBy" text,
+    "UpdatedAt" timestamp with time zone,
+    "UpdatedBy" text,
+    "IsActive" boolean NOT NULL DEFAULT TRUE,
+    "IsDeleted" boolean NOT NULL DEFAULT FALSE,
+    CONSTRAINT "PK_Categories" PRIMARY KEY ("Id")
+);
+2026-04-07 08:33:58.673 -04:00 [WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2026-04-07 08:35:44.755 -04:00 [WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2026-04-07 08:37:19.685 -04:00 [WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2026-04-07 08:37:35.245 -04:00 [WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.

@@ -1,5 +1,6 @@
-namespace NexoCommerceAI.Application.Features.Auth.DTOs;
+namespace NexoCommerceAI.Application.Features.Auth.Models;
 
 public record RefreshTokenRequest(
+    string Token,
     string RefreshToken
 );

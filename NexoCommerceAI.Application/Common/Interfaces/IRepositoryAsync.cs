@@ -1,6 +1,5 @@
+using Ardalis.Specification;
+
 namespace NexoCommerceAI.Application.Common.Interfaces;
 
-public class IRepositoryAsync
-{
-    
-}
+public interface IRepositoryAsync<TEntity> : IRepositoryBase<TEntity> where TEntity : class;

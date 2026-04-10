@@ -1,6 +1,8 @@
+// Application/Common/Attributes/InvalidateCacheAttribute.cs
 namespace NexoCommerceAI.Application.Common.Attributes;
 
-public class InvalidateCacheAttribute
+[AttributeUsage(AttributeTargets.Class, Inherited = false)]
+public class InvalidateCacheAttribute(params string[] cacheKeyPrefixes) : Attribute
 {
-    
+    public string[] CacheKeyPrefixes { get; } = cacheKeyPrefixes;
 }

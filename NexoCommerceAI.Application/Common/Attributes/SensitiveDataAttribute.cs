@@ -1,6 +1,7 @@
+// Application/Common/Attributes/SensitiveDataAttribute.cs
 namespace NexoCommerceAI.Application.Common.Attributes;
 
-public class SensitiveDataAttribute
+[AttributeUsage(AttributeTargets.Property)]
+public class SensitiveDataAttribute : Attribute
 {
-    
 }

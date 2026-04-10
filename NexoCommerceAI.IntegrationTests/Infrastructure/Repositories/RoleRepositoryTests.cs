@@ -1,4 +1,4 @@
-namespace NexoCommerceAI.IntegrationTests.Api.Repositories;
+namespace NexoCommerceAI.IntegrationTests.Infrastructure.Repositories;
 
 public class RoleRepositoryTests
 {

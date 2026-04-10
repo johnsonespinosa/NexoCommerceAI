@@ -1,0 +1,7 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=dae35d11_002D346a_002D4863_002D9fff_002D11f9a8ba520d/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from &amp;lt;NexoCommerceAI.UnitTests&amp;gt;" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;Or&gt;&#xD;
+    &lt;Project Location="C:\Users\johnson\Desktop\Roadmap 2026\NexoCommerceAI\NexoCommerceAI\NexoCommerceAI.UnitTests" Presentation="&amp;lt;NexoCommerceAI.UnitTests&amp;gt;" /&gt;&#xD;
+    &lt;Project Location="C:\Users\johnson\Desktop\Roadmap 2026\NexoCommerceAI\NexoCommerceAI\NexoCommerceAI.IntegrationTests" Presentation="&amp;lt;NexoCommerceAI.IntegrationTests&amp;gt;" /&gt;&#xD;
+  &lt;/Or&gt;&#xD;
+&lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

@@ -1,16 +1,12 @@
+using Microsoft.AspNetCore.Identity;
 using NexoCommerceAI.Application.Common.Interfaces;
 
 namespace NexoCommerceAI.Infrastructure.Services;
 
-public class PasswordHashService : IPasswordHasherService
+public class PasswordHasherService : IPasswordHasherService
 {
-    public string Hash(string password)
-    {
-        throw new NotImplementedException();
-    }
-
-    public bool Verify(string password, string hashed)
-    {
-        throw new NotImplementedException();
-    }
+    private readonly PasswordHasher<object> _hasher = new();
+    public string Hash(string password) => _hasher.HashPassword(null!, password);
+    public bool Verify(string password, string hashed) =>
+        _hasher.VerifyHashedPassword(null!, hashed, password) == PasswordVerificationResult.Success;
 }

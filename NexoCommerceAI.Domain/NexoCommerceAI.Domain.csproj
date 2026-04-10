@@ -5,5 +5,13 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="Ardalis.Specification" Version="9.3.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Enums\" />
+    </ItemGroup>
 
 </Project>

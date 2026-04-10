@@ -2,6 +2,16 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NexoCommerceAI.Api", "NexoCommerceAI.Api\NexoCommerceAI.Api.csproj", "{4F12C911-2AE7-4181-90BB-6EBFD6F8321D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NexoCommerceAI.Application", "NexoCommerceAI.Application\NexoCommerceAI.Application.csproj", "{E4CC583B-AB4F-46C2-8346-7D6DB917810B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NexoCommerceAI.Domain", "NexoCommerceAI.Domain\NexoCommerceAI.Domain.csproj", "{9E102FA7-691A-4B4D-9A73-108BA8354B66}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NexoCommerceAI.Infrastructure", "NexoCommerceAI.Infrastructure\NexoCommerceAI.Infrastructure.csproj", "{53D9DCCC-FAF6-4C15-8105-9BF51C88FACA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NexoCommerceAI.IntegrationTests", "NexoCommerceAI.IntegrationTests\NexoCommerceAI.IntegrationTests.csproj", "{A52315F4-D14B-4016-86D9-76F2203AC723}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NexoCommerceAI.UnitTests", "NexoCommerceAI.UnitTests\NexoCommerceAI.UnitTests.csproj", "{0D33FCA8-BD1A-4124-AFB3-6EE50A8E673C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +22,25 @@ Global
 		{4F12C911-2AE7-4181-90BB-6EBFD6F8321D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4F12C911-2AE7-4181-90BB-6EBFD6F8321D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4F12C911-2AE7-4181-90BB-6EBFD6F8321D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E4CC583B-AB4F-46C2-8346-7D6DB917810B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4CC583B-AB4F-46C2-8346-7D6DB917810B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4CC583B-AB4F-46C2-8346-7D6DB917810B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4CC583B-AB4F-46C2-8346-7D6DB917810B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E102FA7-691A-4B4D-9A73-108BA8354B66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E102FA7-691A-4B4D-9A73-108BA8354B66}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E102FA7-691A-4B4D-9A73-108BA8354B66}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E102FA7-691A-4B4D-9A73-108BA8354B66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53D9DCCC-FAF6-4C15-8105-9BF51C88FACA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53D9DCCC-FAF6-4C15-8105-9BF51C88FACA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53D9DCCC-FAF6-4C15-8105-9BF51C88FACA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53D9DCCC-FAF6-4C15-8105-9BF51C88FACA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A52315F4-D14B-4016-86D9-76F2203AC723}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A52315F4-D14B-4016-86D9-76F2203AC723}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A52315F4-D14B-4016-86D9-76F2203AC723}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A52315F4-D14B-4016-86D9-76F2203AC723}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D33FCA8-BD1A-4124-AFB3-6EE50A8E673C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D33FCA8-BD1A-4124-AFB3-6EE50A8E673C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D33FCA8-BD1A-4124-AFB3-6EE50A8E673C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D33FCA8-BD1A-4124-AFB3-6EE50A8E673C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

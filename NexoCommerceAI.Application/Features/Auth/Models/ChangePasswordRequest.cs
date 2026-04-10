@@ -1,6 +1,7 @@
 namespace NexoCommerceAI.Application.Features.Auth.Models;
 
-public class ChangePasswordRequest
-{
-    
-}
+public record ChangePasswordRequest(
+    string CurrentPassword,
+    string NewPassword,
+    string ConfirmNewPassword
+);

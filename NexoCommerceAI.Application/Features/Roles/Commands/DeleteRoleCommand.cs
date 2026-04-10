@@ -1,6 +1,10 @@
+using MediatR;
+using NexoCommerceAI.Application.Common.Attributes;
+
 namespace NexoCommerceAI.Application.Features.Roles.Commands;
 
-public class DeleteRoleCommand
+[InvalidateCache("roles_list", "role_by_id", "role_by_name")]
+public class DeleteRoleCommand(Guid id) : IRequest<bool>
 {
-    
+    public Guid Id { get; init; } = id;
 }

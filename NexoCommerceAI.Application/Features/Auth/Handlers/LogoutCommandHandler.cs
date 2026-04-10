@@ -3,32 +3,46 @@ using Microsoft.Extensions.Logging;
 using NexoCommerceAI.Application.Common.Exceptions;
 using NexoCommerceAI.Application.Common.Interfaces;
 using NexoCommerceAI.Application.Features.Auth.Commands;
+using NexoCommerceAI.Domain.Entities;
 
 namespace NexoCommerceAI.Application.Features.Auth.Handlers;
 
 public class LogoutCommandHandler(
     IUserRepository userRepository,
-    ICurrentUserService currentUserService,
     ILogger<LogoutCommandHandler> logger)
-    : IRequestHandler<LogoutCommand, Unit>
+    : IRequestHandler<LogoutCommand, bool>
 {
-    public async Task<Unit> Handle(LogoutCommand request, CancellationToken cancellationToken)
+    public async Task<bool> Handle(LogoutCommand request, CancellationToken cancellationToken)
     {
-        if (!currentUserService.UserId.HasValue)
-            throw new UnauthorizedException("User not authenticated");
-        
-        var user = await userRepository.GetByIdAsync(currentUserService.UserId.Value, cancellationToken);
-        
-        if (user is null)
-            throw new NotFoundException("User not found");
-        
-        // Usar el método de dominio para revocar el refresh token
-        user.RevokeRefreshToken();
-        
-        await userRepository.UpdateAsync(user, cancellationToken);
-        
-        logger.LogInformation("User logged out: {Email}", user.Email);
-        
-        return Unit.Value;
+        try
+        {
+            logger.LogInformation("Logging out user: {UserId}", request.UserId);
+            
+            var user = await userRepository.GetByIdAsync(request.UserId, cancellationToken);
+            if (user == null)
+            {
+                logger.LogWarning("User not found during logout: {UserId}", request.UserId);
+                throw new NotFoundException(nameof(User), request.UserId);
+            }
+            
+            // Revocar el refresh token
+            user.RevokeRefreshToken();
+            
+            await userRepository.UpdateAsync(user, cancellationToken);
+            await userRepository.SaveChangesAsync(cancellationToken);
+            
+            logger.LogInformation("User logged out successfully: {UserId} - {Email}", user.Id, user.Email);
+            
+            return true;
+        }
+        catch (NotFoundException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error during logout for user: {UserId}", request.UserId);
+            throw;
+        }
     }
 }

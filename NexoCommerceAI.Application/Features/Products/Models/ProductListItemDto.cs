@@ -1,4 +1,4 @@
-namespace NexoCommerceAI.Application.Features.Products.DTOs;
+namespace NexoCommerceAI.Application.Features.Products.Models;
 
 public record ProductListItemDto(
     Guid Id,

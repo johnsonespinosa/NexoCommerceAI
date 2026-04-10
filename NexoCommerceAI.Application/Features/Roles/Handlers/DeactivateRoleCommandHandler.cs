@@ -1,6 +1,57 @@
+using MediatR;
+using Microsoft.Extensions.Logging;
+using NexoCommerceAI.Application.Common.Exceptions;
+using NexoCommerceAI.Application.Common.Interfaces;
+using NexoCommerceAI.Application.Features.Roles.Commands;
+using NexoCommerceAI.Domain.Entities;
+
 namespace NexoCommerceAI.Application.Features.Roles.Handlers;
 
-public class DeactivateRoleCommandHandler
+public class DeactivateRoleCommandHandler(
+    IRoleRepository roleRepository,
+    ILogger<DeactivateRoleCommandHandler> logger)
+    : IRequestHandler<DeactivateRoleCommand, bool>
 {
-    
+    public async Task<bool> Handle(DeactivateRoleCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            logger.LogInformation("Deactivating role: {RoleId}", request.Id);
+            
+            var role = await roleRepository.GetByIdAsync(request.Id, cancellationToken);
+            if (role == null)
+                throw new NotFoundException(nameof(Role), request.Id);
+            
+            if (role.IsDeleted)
+                throw new ValidationException($"Cannot deactivate deleted role '{role.Name}'");
+            
+            if (!role.IsActive)
+            {
+                logger.LogInformation("Role already inactive: {RoleId} - {RoleName}", role.Id, role.Name);
+                return false;
+            }
+            
+            role.Deactivate();
+            
+            await roleRepository.UpdateAsync(role, cancellationToken);
+            await roleRepository.SaveChangesAsync(cancellationToken);
+            
+            logger.LogInformation("Role deactivated successfully: {RoleId} - {RoleName}", role.Id, role.Name);
+            
+            return true;
+        }
+        catch (NotFoundException)
+        {
+            throw;
+        }
+        catch (ValidationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error deactivating role: {RoleId}", request.Id);
+            throw;
+        }
+    }
 }

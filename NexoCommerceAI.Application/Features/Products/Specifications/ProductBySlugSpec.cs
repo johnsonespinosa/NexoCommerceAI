@@ -3,9 +3,9 @@ using NexoCommerceAI.Domain.Entities;
 
 namespace NexoCommerceAI.Application.Features.Products.Specifications;
 
-public class ProductBySlugSpecification : Specification<Product>
+public class ProductBySlugSpec : Specification<Product>
 {
-    public ProductBySlugSpecification(string slug)
+    public ProductBySlugSpec(string slug)
     {
         Query.Where(product => product.Slug == slug && !product.IsDeleted)
              .Include(product => product.Category);

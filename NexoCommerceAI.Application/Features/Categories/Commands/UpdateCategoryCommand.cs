@@ -1,3 +1,13 @@
+using MediatR;
+using NexoCommerceAI.Application.Common.Attributes;
+using NexoCommerceAI.Application.Features.Categories.Models;
+
 namespace NexoCommerceAI.Application.Features.Categories.Commands;
 
-public record UpdateCategoryCommand();
+[InvalidateCache("categories_list", "category_by_id", "category_by_slug")]
+public class UpdateCategoryCommand : IRequest<CategoryResponse>
+{
+    public Guid Id { get; init; }
+    public string? Name { get; init; }
+    public string? Slug { get; init; }
+}

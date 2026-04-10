@@ -1,6 +1,6 @@
 namespace NexoCommerceAI.Application.Features.Auth.Models;
 
-public class UpdateProfileRequest
-{
-    
-}
+public record UpdateProfileRequest(
+    string UserName,
+    string Email
+);

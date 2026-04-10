@@ -3,57 +3,64 @@ using Microsoft.Extensions.Logging;
 using NexoCommerceAI.Application.Common.Exceptions;
 using NexoCommerceAI.Application.Common.Interfaces;
 using NexoCommerceAI.Application.Features.Auth.Commands;
-using NexoCommerceAI.Application.Features.Auth.DTOs;
+using NexoCommerceAI.Application.Features.Auth.Models;
 using NexoCommerceAI.Domain.Entities;
 
 namespace NexoCommerceAI.Application.Features.Auth.Handlers;
 
-public class RegisterUserHandler(
-    IUserRepository repository,
-    IRepositoryAsync<Role> roleRepository,
-    IPasswordHasherService hasher,
-    IJwtTokenService jwt,
-    ILogger<RegisterUserHandler> logger)
-    : IRequestHandler<RegisterUserCommand, AuthResponse>
+public class RegisterCommandHandler(
+    IUserRepository userRepository,
+    IRoleRepository roleRepository,
+    IPasswordHasherService passwordHasher,
+    IJwtTokenService jwtService,
+    ILogger<RegisterCommandHandler> logger)
+    : IRequestHandler<RegisterCommand, AuthResponse>
 {
-    public async Task<AuthResponse> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
+    public async Task<AuthResponse> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
-        // Validaciones de unicidad
-        if (!await repository.IsEmailUniqueAsync(request.Email, cancellationToken))
-            throw new ConflictException("Email already exists");
-
-        if (!await repository.IsUserNameUniqueAsync(request.UserName, cancellationToken))
-            throw new ConflictException("Username already exists");
-
-        // Obtener role "Customer"
-        var role = (await roleRepository.ListAsync(
-            new RoleByNameSpec("Customer"), cancellationToken)).FirstOrDefault()
-            ?? throw new Exception("Customer role not found");
-
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            UserName = request.UserName,
-            Email = request.Email,
-            PasswordHash = hasher.Hash(request.Password),
-            RoleId = role.Id,
-            Role = role,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
-        };
-
+        logger.LogInformation("Registering new user: {Email}", request.Email);
+        
+        // Verificar si el email ya existe
+        if (!await userRepository.IsEmailUniqueAsync(request.Email, cancellationToken))
+            throw new ConflictException("Email already registered");
+        
+        // Verificar si el username ya existe
+        if (!await userRepository.IsUserNameUniqueAsync(request.UserName, cancellationToken))
+            throw new ConflictException("Username already taken");
+        
+        // Obtener el rol por defecto (Customer)
+        var defaultRole = await roleRepository.GetByNameAsync("Customer", cancellationToken);
+        if (defaultRole is null)
+            throw new NotFoundException("Default role 'Customer' not found. Please contact support.");
+        
+        // Hashear la contraseña
+        var passwordHash = passwordHasher.Hash(request.Password);
+        
+        // Crear el usuario
+        var user = User.Create(request.UserName, request.Email, passwordHash, defaultRole.Id);
+        
+        await userRepository.AddAsync(user, cancellationToken);
+        
         // Generar refresh token
-        var refreshToken = jwt.GenerateRefreshToken();
-        user.RefreshToken = refreshToken;
-        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-
-        await repository.AddAsync(user, cancellationToken);
-
-        // Generar JWT
-        var token = jwt.GenerateToken(user);
-
-        logger.LogInformation("User registered: {Email} ({UserId})", user.Email, user.Id);
-
-        return new AuthResponse(user.Id, user.Email, user.UserName, token, refreshToken, DateTime.UtcNow.AddHours(1), user.Role.Name);
+        var refreshToken = jwtService.GenerateRefreshToken();
+        var refreshTokenExpiry = DateTime.UtcNow.AddDays(7);
+        user.SetRefreshToken(refreshToken, refreshTokenExpiry);
+        
+        await userRepository.UpdateAsync(user, cancellationToken);
+        
+        // Generar token JWT
+        var token = jwtService.GenerateToken(user);
+        
+        logger.LogInformation("User registered successfully: {UserId} - {Email}", user.Id, user.Email);
+        
+        return new AuthResponse(
+            user.Id,
+            user.Email,
+            user.UserName,
+            token,
+            refreshToken,
+            DateTime.UtcNow.AddHours(1),
+            defaultRole.Name
+        );
     }
 }
