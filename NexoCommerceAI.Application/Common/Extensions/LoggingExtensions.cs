@@ -402,13 +402,13 @@ private static readonly Action<ILogger, Guid, string, Exception?> CannotDeactiva
 
     public static void PriceUpdated(this ILogger logger, Guid productId, decimal oldPrice, decimal newPrice, decimal? oldCompareAt, decimal? newCompareAt)
     {
-        logger.LogInformation(
-            "Price updated successfully for product: {ProductId} - Price: From {OldPrice} to {NewPrice}, Compare At Price: From {OldCompareAt} to {NewCompareAt}",
+        PriceUpdatedAction(logger, 
             productId, 
             oldPrice.ToString("F2"), 
             newPrice.ToString("F2"), 
             oldCompareAt?.ToString("F2") ?? "none", 
-            newCompareAt?.ToString("F2") ?? "none");
+            newCompareAt?.ToString("F2") ?? "none", 
+            null);
     }
     
     public static void SearchProductsStarted(this ILogger logger, string searchTerm, int take)

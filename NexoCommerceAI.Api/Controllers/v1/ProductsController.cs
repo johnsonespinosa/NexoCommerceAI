@@ -16,10 +16,9 @@ namespace NexoCommerceAI.Api.Controllers.v1;
 [Produces("application/json")]
 [Consumes("application/json")]
 [ApiVersion("1.0")]
-public class ProductsController(IMediator mediator, ILogger<ProductsController> logger) : ControllerBase
+public class ProductsController(IMediator mediator) : ControllerBase
 {
     private readonly IMediator _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-    private readonly ILogger<ProductsController> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     #region Queries
 
@@ -488,6 +487,143 @@ public class ProductsController(IMediator mediator, ILogger<ProductsController> 
         var result = await _mediator.Send(command, cancellationToken);
         return Ok(result);
     }
+    
+    /// <summary>
+/// Adds an image to a product.
+/// </summary>
+/// <param name="productId">The unique identifier of the product.</param>
+/// <param name="image">The image file to upload.</param>
+/// <param name="isMain">Whether this image should be the main image.</param>
+/// <param name="displayOrder">The display order of the image.</param>
+/// <param name="cancellationToken">Cancellation token for the request.</param>
+/// <returns>The uploaded image information.</returns>
+/// <response code="200">Returns the uploaded image information.</response>
+/// <response code="400">If the image is invalid or product not found.</response>
+/// <response code="404">If the product is not found.</response>
+[HttpPost("{productId:guid}/images")]
+[ProducesResponseType(typeof(ProductImageResponse), StatusCodes.Status200OK)]
+[ProducesResponseType(StatusCodes.Status400BadRequest)]
+[ProducesResponseType(StatusCodes.Status404NotFound)]
+[RequestSizeLimit(5 * 1024 * 1024)] // 5MB max
+[RequestFormLimits(MultipartBodyLengthLimit = 5 * 1024 * 1024)]
+public async Task<ActionResult<ProductImageResponse>> AddProductImage(
+    Guid productId,
+    IFormFile image,
+    [FromQuery] bool isMain = false,
+    [FromQuery] int? displayOrder = null,
+    CancellationToken cancellationToken = default)
+{
+    if (image.Length == 0)
+        return BadRequest("Image file is required");
+
+    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+    var extension = Path.GetExtension(image.FileName).ToLowerInvariant();
+    
+    if (!allowedExtensions.Contains(extension))
+        return BadRequest($"Invalid file type. Allowed types: {string.Join(", ", allowedExtensions)}");
+
+    var command = new AddProductImageCommand
+    (
+        ProductId: productId,
+        Image: image,
+        IsMain: isMain,
+        DisplayOrder: displayOrder
+    );
+    
+    var result = await _mediator.Send(command, cancellationToken);
+    return Ok(result);
+}
+
+/// <summary>
+/// Removes an image from a product.
+/// </summary>
+/// <param name="productId">The unique identifier of the product.</param>
+/// <param name="imageId">The unique identifier of the image to remove.</param>
+/// <param name="cancellationToken">Cancellation token for the request.</param>
+/// <returns>No content if successful.</returns>
+/// <response code="204">If the image was successfully removed.</response>
+/// <response code="404">If the product or image is not found.</response>
+[HttpDelete("{productId:guid}/images/{imageId:guid}")]
+[ProducesResponseType(StatusCodes.Status204NoContent)]
+[ProducesResponseType(StatusCodes.Status404NotFound)]
+public async Task<ActionResult> RemoveProductImage(
+    Guid productId,
+    Guid imageId,
+    CancellationToken cancellationToken = default)
+{
+    var command = new RemoveProductImageCommand
+    {
+        ProductId = productId,
+        ImageId = imageId
+    };
+    
+    var result = await _mediator.Send(command, cancellationToken);
+    
+    if (!result)
+        return NotFound();
+    
+    return NoContent();
+}
+
+/// <summary>
+/// Sets an image as the main image for a product.
+/// </summary>
+/// <param name="productId">The unique identifier of the product.</param>
+/// <param name="imageId">The unique identifier of the image to set as main.</param>
+/// <param name="cancellationToken">Cancellation token for the request.</param>
+/// <returns>No content if successful.</returns>
+/// <response code="204">If the image was successfully set as main.</response>
+/// <response code="404">If the product or image is not found.</response>
+[HttpPatch("{productId:guid}/images/{imageId:guid}/main")]
+[ProducesResponseType(StatusCodes.Status204NoContent)]
+[ProducesResponseType(StatusCodes.Status404NotFound)]
+public async Task<ActionResult> SetMainImage(
+    Guid productId,
+    Guid imageId,
+    CancellationToken cancellationToken = default)
+{
+    var command = new SetMainImageCommand
+    {
+        ProductId = productId,
+        ImageId = imageId
+    };
+    
+    var result = await _mediator.Send(command, cancellationToken);
+    
+    if (!result)
+        return NotFound();
+    
+    return NoContent();
+}
+
+/// <summary>
+/// Gets all images for a product.
+/// </summary>
+/// <param name="productId">The unique identifier of the product.</param>
+/// <param name="cancellationToken">Cancellation token for the request.</param>
+/// <returns>A list of product images.</returns>
+/// <response code="200">Returns the list of product images.</response>
+/// <response code="404">If the product is not found.</response>
+[HttpGet("{productId:guid}/images")]
+[ProducesResponseType(typeof(IReadOnlyList<ProductImageResponse>), StatusCodes.Status200OK)]
+[ProducesResponseType(StatusCodes.Status404NotFound)]
+public async Task<ActionResult<IReadOnlyList<ProductImageResponse>>> GetProductImages(
+    Guid productId,
+    CancellationToken cancellationToken = default)
+{
+    // Primero verificar que el producto existe
+    var productQuery = new GetProductByIdQuery(productId);
+    var product = await _mediator.Send(productQuery, cancellationToken);
+    
+    if (product == null)
+        return NotFound($"Product with ID '{productId}' was not found.");
+    
+    // Obtener las imágenes del producto directamente desde el repositorio
+    // Podrías crear un query específico para esto
+    var images = await _mediator.Send(new GetProductImagesQuery(productId), cancellationToken);
+    
+    return Ok(images);
+}
 
     #endregion
 }

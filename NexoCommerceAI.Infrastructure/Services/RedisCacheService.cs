@@ -1,71 +1,149 @@
+using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NexoCommerceAI.Application.Common.Interfaces;
-using System.Text.Json;
 using NexoCommerceAI.Application.Common.Settings;
+using StackExchange.Redis;
 
 namespace NexoCommerceAI.Infrastructure.Services;
 
-public class RedisCacheService(IDistributedCache distributedCache, IOptions<CacheSettings> settings)
-    : ICacheService
+public class RedisCacheService : ICacheService
 {
-    private readonly CacheSettings _settings = settings.Value;
-
+    private readonly IDistributedCache _distributedCache;
+    private readonly CacheSettings _settings;
+    private readonly ILogger<RedisCacheService> _logger;
+    
+    public RedisCacheService(
+        IDistributedCache distributedCache, 
+        IOptions<CacheSettings> settings,
+        ILogger<RedisCacheService> logger)
+    {
+        _distributedCache = distributedCache;
+        _settings = settings.Value;
+        _logger = logger;
+    }
+    
     public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
     {
-        var data = await distributedCache.GetStringAsync(key, cancellationToken);
-        return string.IsNullOrEmpty(data) ? default : JsonSerializer.Deserialize<T>(data);
+        try
+        {
+            var data = await _distributedCache.GetStringAsync(key, cancellationToken);
+            if (string.IsNullOrEmpty(data))
+                return default;
+            
+            return JsonSerializer.Deserialize<T>(data);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Redis get error for key: {Key}", key);
+            return default;
+        }
     }
     
     public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
     {
-        var options = new DistributedCacheEntryOptions
+        try
         {
-            AbsoluteExpirationRelativeToNow = expiration ?? TimeSpan.FromMinutes(_settings.DefaultExpirationMinutes),
-            SlidingExpiration = TimeSpan.FromMinutes(_settings.SlidingExpirationMinutes)
-        };
-        
-        var data = JsonSerializer.Serialize(value);
-        await distributedCache.SetStringAsync(key, data, options, cancellationToken);
+            var options = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = expiration ?? TimeSpan.FromMinutes(_settings.DefaultExpirationMinutes),
+                SlidingExpiration = TimeSpan.FromMinutes(_settings.SlidingExpirationMinutes)
+            };
+            
+            var data = JsonSerializer.Serialize(value);
+            await _distributedCache.SetStringAsync(key, data, options, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Redis set error for key: {Key}", key);
+        }
     }
     
     public async Task RemoveAsync(string key, CancellationToken cancellationToken = default)
     {
-        await distributedCache.RemoveAsync(key, cancellationToken);
+        try
+        {
+            await _distributedCache.RemoveAsync(key, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Redis remove error for key: {Key}", key);
+        }
     }
     
     public async Task RemoveByPrefixAsync(string prefix, CancellationToken cancellationToken = default)
     {
-        // Redis no soporta eliminación por prefijo directamente
-        // Se necesita implementar con SCAN o usar librerías adicionales
-        await Task.CompletedTask;
+        // Redis no soporta eliminación por prefijo nativamente
+        // Esta es una implementación básica usando SCAN
+        try
+        {
+            var server = GetServer();
+            var keys = server.Keys(pattern: $"{prefix}*").ToArray();
+            
+            foreach (var key in keys)
+            {
+                await _distributedCache.RemoveAsync(key, cancellationToken);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Redis remove by prefix error for prefix: {Prefix}", prefix);
+        }
     }
     
     public bool TryGet<T>(string key, out T? value)
     {
         value = default;
-        var data = distributedCache.GetString(key);
-        if (string.IsNullOrEmpty(data))
+        try
+        {
+            var data = _distributedCache.GetString(key);
+            if (string.IsNullOrEmpty(data))
+                return false;
+            
+            value = JsonSerializer.Deserialize<T>(data);
+            return value != null;
+        }
+        catch
+        {
             return false;
-        
-        value = JsonSerializer.Deserialize<T>(data);
-        return value != null;
+        }
     }
     
     public void Set<T>(string key, T value, TimeSpan? expiration = null)
     {
-        var options = new DistributedCacheEntryOptions
+        try
         {
-            AbsoluteExpirationRelativeToNow = expiration ?? TimeSpan.FromMinutes(_settings.DefaultExpirationMinutes),
-            SlidingExpiration = TimeSpan.FromMinutes(_settings.SlidingExpirationMinutes)
-        };
-        
-        var data = JsonSerializer.Serialize(value);
-        distributedCache.SetString(key, data, options);
+            var options = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = expiration ?? TimeSpan.FromMinutes(_settings.DefaultExpirationMinutes),
+                SlidingExpiration = TimeSpan.FromMinutes(_settings.SlidingExpirationMinutes)
+            };
+            
+            var data = JsonSerializer.Serialize(value);
+            _distributedCache.SetString(key, data, options);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Redis set error for key: {Key}", key);
+        }
     }
     
     public void Remove(string key)
     {
-        distributedCache.Remove(key);
+        try
+        {
+            _distributedCache.Remove(key);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Redis remove error for key: {Key}", key);
+        }
+    }
+    
+    private IServer GetServer()
+    {
+        var connection = ConnectionMultiplexer.Connect(_settings.RedisConnectionString);
+        return connection.GetServer(connection.GetEndPoints().First());
     }
 }

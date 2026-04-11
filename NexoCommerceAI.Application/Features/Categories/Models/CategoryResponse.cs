@@ -5,7 +5,7 @@ namespace NexoCommerceAI.Application.Features.Categories.Models;
 public record CategoryResponse
 {
     public Guid Id { get; init; }
-    public string Name { get; init; } = default!;
+    public string? Name { get; init; } = default!;
     public string Slug { get; init; } = default!;
     public bool IsActive { get; init; }
     public int ProductCount { get; init; }

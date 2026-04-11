@@ -6,7 +6,7 @@ namespace NexoCommerceAI.Domain.Common;
 
 public static class SlugGenerator
 {
-    public static string Generate(string input, bool lowerCase = true, bool preserveNumbers = true)
+    public static string Generate(string? input, bool lowerCase = true, bool preserveNumbers = true)
     {
         if (string.IsNullOrWhiteSpace(input))
             throw new ArgumentException("Input cannot be null or empty", nameof(input));
@@ -46,7 +46,7 @@ public static class SlugGenerator
         return slug;
     }
     
-    public static string GenerateUnique(string input, Func<string, bool> isSlugExists, int maxAttempts = 10)
+    public static string GenerateUnique(string? input, Func<string, bool> isSlugExists, int maxAttempts = 10)
     {
         var baseSlug = Generate(input);
         var slug = baseSlug;

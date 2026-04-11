@@ -1,21 +1,21 @@
 ﻿using NexoCommerceAI.Domain.Common;
+using NexoCommerceAI.Domain.Events;
 
 namespace NexoCommerceAI.Domain.Entities;
 
 public class Product : BaseEntity
 {
-    public string Name { get; private set; } = default!;
-    public string Slug { get; private set; } = default!;
+    public string Name { get; private set; }
+    public string Slug { get; private set; }
     public string? Description { get; private set; }
     public decimal Price { get; private set; }
     public decimal? CompareAtPrice { get; private set; }
-    public string Sku { get; private set; } = default!;
+    public string Sku { get; private set; }
     public int Stock { get; private set; }
     public bool IsFeatured { get; private set; }
     public Guid CategoryId { get; private set; }
     public Category Category { get; private set; } = default!;
-    
-    private Product() { }  // EF
+    public ICollection<ProductImage> Images { get; private set; } = new List<ProductImage>();
 
     private Product(string name, string slug, string? description, decimal price, decimal? compareAtPrice, 
                     string sku, int stock, bool isFeatured, Guid categoryId)
@@ -31,38 +31,44 @@ public class Product : BaseEntity
         CategoryId = categoryId;
     }
     
-    private static void ValidateProduct(string name, string slug, string? description, decimal price, 
-                                        decimal? compareAtPrice, string sku, int stock)
+    private static void ValidateProduct(
+        string? name, 
+        string slug, 
+        string? description, 
+        decimal price, 
+        decimal? compareAtPrice, 
+        string sku, 
+        int stock)
     {
-        if (string.IsNullOrWhiteSpace(name)) 
-            throw new ArgumentException("Name is required");
-            
-        if (string.IsNullOrWhiteSpace(slug)) 
-            throw new ArgumentException("Slug is required");
-            
+        _ = name ?? throw new ArgumentException("Name is required");
+        _ = slug ?? throw new ArgumentException("Slug is required");
+        
         if (description?.Length > 2000) 
             throw new ArgumentException("Description cannot exceed 2000 characters");
-            
-        if (string.IsNullOrWhiteSpace(sku))
-            throw new ArgumentException("SKU is required");
-            
+        
+        _ = sku ?? throw new ArgumentException("SKU is required");
+        
         if (sku.Length > 50)
             throw new ArgumentException("SKU cannot exceed 50 characters");
-            
-        if (price <= 0)
-            throw new ArgumentException("Price must be greater than zero");
-            
-        if (price > 1_000_000)
-            throw new ArgumentException("Price exceeds maximum allowed of 1,000,000");
-            
+        
+        switch (price)
+        {
+            case <= 0:
+                throw new ArgumentException("Price must be greater than zero");
+            case > 1_000_000:
+                throw new ArgumentException("Price exceeds maximum allowed of 1,000,000");
+        }
+
         if (compareAtPrice.HasValue)
         {
-            if (compareAtPrice.Value <= 0)
-                throw new ArgumentException("Compare at price must be greater than zero");
-                
-            if (compareAtPrice.Value > 1_000_000)
-                throw new ArgumentException("Compare at price exceeds maximum allowed of 1,000,000");
-                
+            switch (compareAtPrice.Value)
+            {
+                case <= 0:
+                    throw new ArgumentException("Compare at price must be greater than zero");
+                case > 1_000_000:
+                    throw new ArgumentException("Compare at price exceeds maximum allowed of 1,000,000");
+            }
+
             if (compareAtPrice.Value <= price)
                 throw new ArgumentException("Compare at price must be greater than regular price");
         }
@@ -127,7 +133,7 @@ public class Product : BaseEntity
         return Create(name, categoryId, description: description, price: price, stock: stock);
     }
     
-    public void Update(string name, string? slug = null, string? description = null, 
+    public void Update(string? name, string? slug = null, string? description = null, 
                       decimal? price = null, decimal? compareAtPrice = null, 
                       string? sku = null, int? stock = null, bool? isFeatured = null, 
                       Guid? categoryId = null)
@@ -159,7 +165,7 @@ public class Product : BaseEntity
         UpdatedAt = DateTime.UtcNow;
     }
     
-    public void UpdateSlug(string slug)
+    public void UpdateSlug(string? slug)
     {
         if (string.IsNullOrWhiteSpace(slug))
             throw new ArgumentException("Slug is required");
@@ -170,12 +176,14 @@ public class Product : BaseEntity
     
     public void UpdatePrice(decimal newPrice, decimal? newCompareAtPrice = null)
     {
-        if (newPrice <= 0)
-            throw new ArgumentException("Price must be greater than zero");
-            
-        if (newPrice > 1_000_000)
-            throw new ArgumentException("Price exceeds maximum allowed");
-            
+        switch (newPrice)
+        {
+            case <= 0:
+                throw new ArgumentException("Price must be greater than zero");
+            case > 1_000_000:
+                throw new ArgumentException("Price exceeds maximum allowed");
+        }
+
         if (newCompareAtPrice.HasValue)
         {
             if (newCompareAtPrice.Value <= 0)
@@ -258,25 +266,133 @@ public class Product : BaseEntity
         if (quantity <= 0) 
             throw new ArgumentException("Quantity must be greater than zero");
             
+        var previousStock = Stock;
         Stock += quantity;
         UpdatedAt = DateTime.UtcNow;
+        
+        // Agregar evento de dominio para restock
+        AddDomainEvent(new StockRestockedEvent
+        (
+            ProductId: Id,
+            ProductName: Name,
+            PreviousStock: previousStock,
+            NewStock: Stock,
+            QuantityAdded: quantity
+        ));
     }
     
     public void DecreaseStock(int quantity)
     {
         if (quantity <= 0) 
             throw new ArgumentException("Quantity must be greater than zero");
-            
+        
         if (Stock < quantity) 
             throw new InvalidOperationException($"Not enough stock available. Current stock: {Stock}, requested: {quantity}");
-            
+        
+        var previousStock = Stock;
         Stock -= quantity;
         UpdatedAt = DateTime.UtcNow;
+
+        // Agregar evento de cambio de stock
+        AddDomainEvent(new StockChangedEvent(
+            ProductId: Id,
+            ProductName: Name,
+            PreviousStock: previousStock,
+            NewStock: Stock,
+            QuantityChanged: -quantity
+        ));
+
+        switch (Stock)
+        {
+            case 0:
+                AddDomainEvent(new OutOfStockEvent(
+                    ProductId: Id,
+                    ProductName: Name
+                ));
+                break;
+            case <= 5:
+                AddDomainEvent(new StockLowEvent
+                (
+                    ProductId: Id,
+                    ProductName: Name,
+                    CurrentStock: Stock,
+                    Threshold: 5
+                ));
+                break;
+        }
     }
     
-    private static string GenerateSku(string name)
+    public void AddImage(ProductImage image)
     {
-        var prefix = string.Concat(name.Take(4)).ToUpper();
+        ArgumentNullException.ThrowIfNull(image);
+        
+        // Si es la primera imagen o se marca como principal
+        if (Images.Count == 0 || image.IsMain)
+        {
+            // Si hay una imagen principal actual, la desmarcamos
+            var currentMain = Images.FirstOrDefault(i => i.IsMain);
+            currentMain?.UnsetAsMain();
+        }
+        
+        Images.Add(image);
+        UpdatedAt = DateTime.UtcNow;
+        
+        AddDomainEvent(new ProductImageAddedEvent(
+            Id,
+            Name,
+            image.Id,
+            image.ImageUrl,
+            image.IsMain));
+    }
+    
+    public void RemoveImage(ProductImage image)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+        
+        Images.Remove(image);
+        UpdatedAt = DateTime.UtcNow;
+        
+        AddDomainEvent(new ProductImageRemovedEvent(
+            Id,
+            Name,
+            image.Id,
+            image.ImageUrl,
+            image.PublicId));
+    }
+    
+    public void SetMainImage(Guid imageId)
+    {
+        var image = Images.FirstOrDefault(i => i.Id == imageId);
+        if (image == null)
+            throw new InvalidOperationException($"Image {imageId} not found");
+    
+        var currentMain = Images.FirstOrDefault(i => i.IsMain);
+        currentMain?.UnsetAsMain();
+
+        image.SetAsMain();
+        UpdatedAt = DateTime.UtcNow;
+    
+        AddDomainEvent(new ProductImageSetMainEvent(
+            Id,
+            Name,
+            image.Id,
+            image.ImageUrl,
+            true));
+    }
+    
+    public ProductImage? GetMainImage()
+    {
+        return Images.FirstOrDefault(i => i.IsMain);
+    }
+    
+    public IReadOnlyList<ProductImage> GetImagesOrdered()
+    {
+        return Images.OrderBy(i => i.DisplayOrder).ThenByDescending(i => i.IsMain).ToList();
+    }
+    
+    private static string GenerateSku(string? name)
+    {
+        var prefix = string.Concat(name!.Take(4)).ToUpper();
         // Usar Guid para mayor unicidad
         var uniqueId = Guid.NewGuid().ToString("N")[..8].ToUpper();
         return $"{prefix}-{uniqueId}";

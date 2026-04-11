@@ -28,11 +28,11 @@ public class UpdateCategoryCommandHandlerTests
         // Arrange
         var categoryId = Guid.NewGuid();
         var command = new UpdateCategoryCommand
-        {
-            Id = categoryId,
-            Name = "Computers",
-            Slug = "computers"
-        };
+        (
+            Id: categoryId,
+            Name: "Computers",
+            Slug: "computers"
+        );
         
         var category = Category.Create("Electronics", "electronics");
 
@@ -58,7 +58,7 @@ public class UpdateCategoryCommandHandlerTests
     public async Task Handle_ShouldThrowNotFoundException_WhenCategoryNotFound()
     {
         // Arrange
-        var command = new UpdateCategoryCommand { Id = Guid.NewGuid(), Name = "New Name" };
+        var command = new UpdateCategoryCommand ( Id: Guid.NewGuid(), Name: "New Name", null! );
 
         _categoryRepositoryMock.Setup(r => r.GetByIdAsync(command.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Category?)null);
@@ -73,10 +73,11 @@ public class UpdateCategoryCommandHandlerTests
         // Arrange
         var categoryId = Guid.NewGuid();
         var command = new UpdateCategoryCommand
-        {
-            Id = categoryId,
-            Name = "ExistingName"
-        };
+        (
+            Id: categoryId,
+            Name: "ExistingName",
+            null!
+        );
         
         var category = Category.Create("Electronics", "electronics");
 

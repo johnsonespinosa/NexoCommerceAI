@@ -19,7 +19,7 @@ public class SlugGeneratorTests
     [InlineData("   ", "untitled")] // Input vacío después de trim
     [InlineData("Übermensch", "ubermensch")]
     [InlineData("Straße", "strasse")]
-    public void Generate_ShouldCreateValidSlug(string input, string expectedSlug)
+    public void Generate_ShouldCreateValidSlug(string? input, string expectedSlug)
     {
         // Act
         var slug = SlugGenerator.Generate(input);

@@ -33,7 +33,7 @@ public class CategoryRepository(ApplicationDbContext dbContext)
         return !await query.AnyAsync(cancellationToken);
     }
 
-    public async Task<bool> IsNameUniqueAsync(string name, Guid? excludeId = null, CancellationToken cancellationToken = default)
+    public async Task<bool> IsNameUniqueAsync(string? name, Guid? excludeId = null, CancellationToken cancellationToken = default)
     {
         var query = _dbContext.Categories.Where(c => c.Name == name && !c.IsDeleted);
         

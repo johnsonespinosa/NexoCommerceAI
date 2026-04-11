@@ -70,7 +70,7 @@ public class CategoryTests
     [InlineData("")]
     [InlineData(" ")]
     [InlineData(null)]
-    public void Create_WithInvalidName_ShouldThrowException(string name)
+    public void Create_WithInvalidName_ShouldThrowException(string? name)
     {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => Category.Create(name));
@@ -88,7 +88,7 @@ public class CategoryTests
     [InlineData("Electronics", "invalid__slug")]
     [InlineData("Electronics", "UPPERCASE")]
     [InlineData("Electronics", "Special@Char")]
-    public void Create_WithInvalidSlug_ShouldThrowException(string name, string slug)
+    public void Create_WithInvalidSlug_ShouldThrowException(string? name, string slug)
     {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => Category.Create(name, slug));
@@ -381,7 +381,7 @@ public class CategoryTests
     [InlineData("Straße", "strasse")]
     [InlineData("Müller", "muller")]
     [InlineData("François", "francois")]
-    public void Create_WithAccentedNames_ShouldGenerateCorrectSlug(string name, string expectedSlug)
+    public void Create_WithAccentedNames_ShouldGenerateCorrectSlug(string? name, string expectedSlug)
     {
         // Act
         var category = Category.Create(name);
@@ -395,7 +395,7 @@ public class CategoryTests
     [InlineData("Books & Literature", "books-and-literature")]
     [InlineData("Clothing & Apparel", "clothing-and-apparel")]
     [InlineData("Sports & Outdoors", "sports-and-outdoors")]
-    public void Create_WithSpecialCharacters_ShouldGenerateCorrectSlug(string name, string expectedSlug)
+    public void Create_WithSpecialCharacters_ShouldGenerateCorrectSlug(string? name, string expectedSlug)
     {
         // Act
         var category = Category.Create(name);

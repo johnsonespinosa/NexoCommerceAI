@@ -30,7 +30,7 @@ public class GetCategoriesListQueryHandler(
             {
                 var searchTerm = pagination.SearchTerm.ToLower();
                 activeCategories = activeCategories
-                    .Where(c => c.Name.ToLower().Contains(searchTerm) || c.Slug.Contains(searchTerm))
+                    .Where(c => c.Name.Contains(searchTerm, StringComparison.CurrentCultureIgnoreCase) || c.Slug.Contains(searchTerm))
                     .ToList();
             }
             

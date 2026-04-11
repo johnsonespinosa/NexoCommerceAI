@@ -4,19 +4,17 @@ namespace NexoCommerceAI.Domain.Entities;
 
 public class Category : BaseEntity
 {
-    public string Name { get; private set; } = default!;
-    public string Slug { get; private set; } = default!;
+    public string Name { get; private set; }
+    public string Slug { get; private set; }
     public ICollection<Product> Products { get; private set; } = new List<Product>();
-    
-    private Category() { }  // EF
-    
+
     private Category(string name, string slug)
     {
         Name = name;
         Slug = slug;
     }
     
-    public static Category Create(string name, string? slug = null, Func<string, Task<bool>>? isSlugUnique = null)
+    public static Category Create(string? name, string? slug, Func<string, Task<bool>>? isSlugUnique = null)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Category name is required");
@@ -41,19 +39,19 @@ public class Category : BaseEntity
         return new Category(name, finalSlug);
     }
     
-    private static bool IsValidName(string name)
+    private static bool IsValidName(string? name)
     {
         // No permitir caracteres especiales que puedan causar problemas
-        return !System.Text.RegularExpressions.Regex.IsMatch(name, @"[<>""'%&]");
+        return !System.Text.RegularExpressions.Regex.IsMatch(name!, @"[<>""'%&]");
     }
     
     // Overload para mantener compatibilidad
-    public static Category Create(string name)
+    public static Category Create(string? name)
     {
         return Create(name, null);
     }
     
-    public void Update(string name, string? slug = null, Func<string, Task<bool>>? isNameUnique = null, Func<string, Task<bool>>? isSlugUnique = null)
+    public void Update(string? name, string? slug = null, Func<string, Task<bool>>? isNameUnique = null, Func<string, Task<bool>>? isSlugUnique = null)
     {
         if (string.IsNullOrWhiteSpace(name)) 
             throw new ArgumentException("Name is required");
@@ -96,7 +94,7 @@ public class Category : BaseEntity
                System.Text.RegularExpressions.Regex.IsMatch(slug, @"^[a-z0-9]+(?:-[a-z0-9]+)*$");
     }
     
-    public void UpdateSlug(string slug)
+    public void UpdateSlug(string? slug)
     {
         if (string.IsNullOrWhiteSpace(slug))
             throw new ArgumentException("Slug is required");

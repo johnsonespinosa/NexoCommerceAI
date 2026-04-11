@@ -16,10 +16,21 @@ public class ProductRepository(ApplicationDbContext dbContext)
         return await FirstOrDefaultAsync(spec, cancellationToken);
     }
     
+    // Sobrescribir GetByIdAsync para incluir imágenes
+    public async Task<Product?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Products
+            .Include(p => p.Category)
+            .Include(p => p.Images.Where(i => i.IsActive))  // Solo imágenes activas
+            .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted, cancellationToken);
+    }
+    
     public async Task<Product?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default)
     {
-        var spec = new ProductBySlugSpec(slug);
-        return await FirstOrDefaultAsync(spec, cancellationToken);
+        return await _dbContext.Products
+            .Include(p => p.Category)
+            .Include(p => p.Images.Where(i => i.IsActive))
+            .FirstOrDefaultAsync(p => p.Slug == slug && !p.IsDeleted, cancellationToken);
     }
     
     public async Task<bool> IsSlugUniqueAsync(string slug, CancellationToken cancellationToken = default)
@@ -51,19 +62,26 @@ public class ProductRepository(ApplicationDbContext dbContext)
 
     public async Task<IReadOnlyList<Product>> GetProductsByCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
-        var spec = new ProductsByCategorySpec(categoryId);
-        return await ListAsync(spec, cancellationToken);
+        return await _dbContext.Products
+            .Include(p => p.Category)
+            .Include(p => p.Images.Where(i => i.IsActive))
+            .Where(p => p.CategoryId == categoryId && !p.IsDeleted && p.IsActive)
+            .OrderBy(p => p.Name)
+            .ToListAsync(cancellationToken);
     }
     
     public async Task<IReadOnlyList<Product>> GetLowStockProductsAsync(int threshold, CancellationToken cancellationToken = default)
     {
-        var spec = new LowStockProductsSpec(threshold);
-        return await ListAsync(spec, cancellationToken);
+        return await _dbContext.Products
+            .Include(p => p.Category)
+            .Include(p => p.Images.Where(i => i.IsActive))
+            .Where(p => p.Stock <= threshold && p.Stock > 0 && !p.IsDeleted && p.IsActive)
+            .OrderBy(p => p.Stock)
+            .ToListAsync(cancellationToken);
     }
     
     public async Task<int> GetTotalStockValueAsync(CancellationToken cancellationToken = default)
     {
-        // Para operaciones de agregación, aún es mejor usar LINQ directo
         return await _dbContext.Products
             .Where(p => !p.IsDeleted && p.IsActive)
             .SumAsync(p => p.Stock, cancellationToken);
@@ -75,31 +93,52 @@ public class ProductRepository(ApplicationDbContext dbContext)
         return await AnyAsync(spec, cancellationToken);
     }
     
-    // Métodos adicionales con Specifications
     public async Task<IReadOnlyList<Product>> GetActiveProductsAsync(CancellationToken cancellationToken = default)
     {
-        var spec = new ActiveProductsSpec();
-        return await ListAsync(spec, cancellationToken);
+        return await _dbContext.Products
+            .Include(p => p.Category)
+            .Include(p => p.Images.Where(i => i.IsActive))
+            .Where(p => p.IsActive && !p.IsDeleted && p.Stock > 0)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync(cancellationToken);
     }
     
     public async Task<IReadOnlyList<Product>> GetPaginatedProductsAsync(int pageNumber, int pageSize, string? searchTerm = null, CancellationToken cancellationToken = default)
     {
-        var spec = new PaginatedProductsSpec(pageNumber, pageSize, searchTerm);
-        return await ListAsync(spec, cancellationToken);
+        var query = _dbContext.Products
+            .Include(p => p.Category)
+            .Include(p => p.Images.Where(i => i.IsActive))
+            .Where(p => !p.IsDeleted && p.IsActive)
+            .AsQueryable();
+        
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var searchTermLower = searchTerm.ToLower();
+            query = query.Where(p => 
+                p.Name.ToLower().Contains(searchTermLower) ||
+                (p.Description != null && p.Description.ToLower().Contains(searchTermLower)) ||
+                p.Sku.ToLower().Contains(searchTermLower));
+        }
+        
+        return await query
+            .OrderByDescending(p => p.CreatedAt)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
     }
     
     public async Task<int> GetProductCountByCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
-        var spec = new ProductCountByCategorySpec(categoryId);
-        return await CountAsync(spec, cancellationToken);
+        return await _dbContext.Products
+            .CountAsync(p => p.CategoryId == categoryId && !p.IsDeleted && p.IsActive, cancellationToken);
     }
 
-    // Métodos adicionales útiles
     public async Task<IReadOnlyList<Product>> GetFeaturedProductsAsync(int take = 10, CancellationToken cancellationToken = default)
     {
         return await _dbContext.Products
             .Where(p => p.IsFeatured && p.IsActive && !p.IsDeleted && p.Stock > 0)
             .Include(p => p.Category)
+            .Include(p => p.Images.Where(i => i.IsActive))
             .OrderByDescending(p => p.CreatedAt)
             .Take(take)
             .ToListAsync(cancellationToken);
@@ -110,6 +149,7 @@ public class ProductRepository(ApplicationDbContext dbContext)
         return await _dbContext.Products
             .Where(p => p.CompareAtPrice > p.Price && p.IsActive && !p.IsDeleted && p.Stock > 0)
             .Include(p => p.Category)
+            .Include(p => p.Images.Where(i => i.IsActive))
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync(cancellationToken);
     }
@@ -159,6 +199,7 @@ public class ProductRepository(ApplicationDbContext dbContext)
                         p.IsActive && 
                         !p.IsDeleted)
             .Include(p => p.Category)
+            .Include(p => p.Images.Where(i => i.IsActive))
             .Take(take)
             .ToListAsync(cancellationToken);
     }
@@ -181,118 +222,128 @@ public class ProductRepository(ApplicationDbContext dbContext)
     }
 
     public async Task<(IReadOnlyList<Product> Items, int TotalCount)> GetPaginatedWithFiltersAsync(
-    int pageNumber,
-    int pageSize,
-    string? searchTerm = null,
-    Guid? categoryId = null,
-    bool? isFeatured = null,
-    bool? isOnSale = null,
-    decimal? minPrice = null,
-    decimal? maxPrice = null,
-    string? sortBy = null,
-    bool sortDescending = false,
-    CancellationToken cancellationToken = default)
-{
-    var query = _dbContext.Products
-        .Include(p => p.Category)
-        .Where(p => !p.IsDeleted && p.IsActive)
-        .AsQueryable();
-    
-    // Aplicar filtros
-    if (!string.IsNullOrWhiteSpace(searchTerm))
+        int pageNumber,
+        int pageSize,
+        string? searchTerm = null,
+        Guid? categoryId = null,
+        bool? isFeatured = null,
+        bool? isOnSale = null,
+        decimal? minPrice = null,
+        decimal? maxPrice = null,
+        string? sortBy = null,
+        bool sortDescending = false,
+        CancellationToken cancellationToken = default)
     {
-        var searchTermLower = searchTerm.ToLower();
-        query = query.Where(p => 
-            p.Name.ToLower().Contains(searchTermLower) ||
-            (p.Description != null && p.Description.ToLower().Contains(searchTermLower)) ||
-            p.Sku.ToLower().Contains(searchTermLower));
+        var query = _dbContext.Products
+            .Include(p => p.Category)
+            .Include(p => p.Images.Where(i => i.IsActive))
+            .Where(p => !p.IsDeleted && p.IsActive)
+            .AsQueryable();
+        
+        // Aplicar filtros
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var searchTermLower = searchTerm.ToLower();
+            query = query.Where(p => 
+                p.Name.ToLower().Contains(searchTermLower) ||
+                (p.Description != null && p.Description.ToLower().Contains(searchTermLower)) ||
+                p.Sku.ToLower().Contains(searchTermLower));
+        }
+        
+        if (categoryId.HasValue)
+            query = query.Where(p => p.CategoryId == categoryId.Value);
+        
+        if (isFeatured.HasValue)
+            query = query.Where(p => p.IsFeatured == isFeatured.Value);
+        
+        if (isOnSale.HasValue && isOnSale.Value)
+            query = query.Where(p => p.CompareAtPrice != null && p.CompareAtPrice > p.Price);
+        
+        if (minPrice.HasValue)
+            query = query.Where(p => p.Price >= minPrice.Value);
+        
+        if (maxPrice.HasValue)
+            query = query.Where(p => p.Price <= maxPrice.Value);
+        
+        // Obtener total
+        var totalCount = await query.CountAsync(cancellationToken);
+        
+        // Aplicar ordenamiento
+        query = ApplySorting(query, sortBy, sortDescending);
+        
+        // Aplicar paginación
+        var items = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+        
+        return (items, totalCount);
     }
-    
-    if (categoryId.HasValue)
-        query = query.Where(p => p.CategoryId == categoryId.Value);
-    
-    if (isFeatured.HasValue)
-        query = query.Where(p => p.IsFeatured == isFeatured.Value);
-    
-    if (isOnSale.HasValue && isOnSale.Value)
-        query = query.Where(p => p.CompareAtPrice != null && p.CompareAtPrice > p.Price);
-    
-    if (minPrice.HasValue)
-        query = query.Where(p => p.Price >= minPrice.Value);
-    
-    if (maxPrice.HasValue)
-        query = query.Where(p => p.Price <= maxPrice.Value);
-    
-    // Obtener total
-    var totalCount = await query.CountAsync(cancellationToken);
-    
-    // Aplicar ordenamiento
-    query = ApplySorting(query, sortBy, sortDescending);
-    
-    // Aplicar paginación
-    var items = await query
-        .Skip((pageNumber - 1) * pageSize)
-        .Take(pageSize)
-        .ToListAsync(cancellationToken);
-    
-    return (items, totalCount);
-}
 
-public async Task<int> GetTotalCountWithFiltersAsync(
-    string? searchTerm = null,
-    Guid? categoryId = null,
-    bool? isFeatured = null,
-    bool? isOnSale = null,
-    decimal? minPrice = null,
-    decimal? maxPrice = null,
-    CancellationToken cancellationToken = default)
-{
-    var query = _dbContext.Products
-        .Where(p => !p.IsDeleted && p.IsActive)
-        .AsQueryable();
-    
-    // Aplicar filtros (misma lógica que arriba)
-    if (!string.IsNullOrWhiteSpace(searchTerm))
+    public async Task<int> GetTotalCountWithFiltersAsync(
+        string? searchTerm = null,
+        Guid? categoryId = null,
+        bool? isFeatured = null,
+        bool? isOnSale = null,
+        decimal? minPrice = null,
+        decimal? maxPrice = null,
+        CancellationToken cancellationToken = default)
     {
-        var searchTermLower = searchTerm.ToLower();
-        query = query.Where(p => 
-            p.Name.ToLower().Contains(searchTermLower) ||
-            (p.Description != null && p.Description.ToLower().Contains(searchTermLower)) ||
-            p.Sku.ToLower().Contains(searchTermLower));
+        var query = _dbContext.Products
+            .Where(p => !p.IsDeleted && p.IsActive)
+            .AsQueryable();
+        
+        // Aplicar filtros
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var searchTermLower = searchTerm.ToLower();
+            query = query.Where(p => 
+                p.Name.ToLower().Contains(searchTermLower) ||
+                (p.Description != null && p.Description.ToLower().Contains(searchTermLower)) ||
+                p.Sku.ToLower().Contains(searchTermLower));
+        }
+        
+        if (categoryId.HasValue)
+            query = query.Where(p => p.CategoryId == categoryId.Value);
+        
+        if (isFeatured.HasValue)
+            query = query.Where(p => p.IsFeatured == isFeatured.Value);
+        
+        if (isOnSale.HasValue && isOnSale.Value)
+            query = query.Where(p => p.CompareAtPrice != null && p.CompareAtPrice > p.Price);
+        
+        if (minPrice.HasValue)
+            query = query.Where(p => p.Price >= minPrice.Value);
+        
+        if (maxPrice.HasValue)
+            query = query.Where(p => p.Price <= maxPrice.Value);
+        
+        return await query.CountAsync(cancellationToken);
     }
-    
-    if (categoryId.HasValue)
-        query = query.Where(p => p.CategoryId == categoryId.Value);
-    
-    if (isFeatured.HasValue)
-        query = query.Where(p => p.IsFeatured == isFeatured.Value);
-    
-    if (isOnSale.HasValue && isOnSale.Value)
-        query = query.Where(p => p.CompareAtPrice != null && p.CompareAtPrice > p.Price);
-    
-    if (minPrice.HasValue)
-        query = query.Where(p => p.Price >= minPrice.Value);
-    
-    if (maxPrice.HasValue)
-        query = query.Where(p => p.Price <= maxPrice.Value);
-    
-    return await query.CountAsync(cancellationToken);
-}
 
-private static IQueryable<Product> ApplySorting(IQueryable<Product> query, string? sortBy, bool sortDescending)
-{
-    if (string.IsNullOrWhiteSpace(sortBy))
-        return query.OrderByDescending(p => p.CreatedAt);
-    
-    var sortByLower = sortBy.ToLower();
-    
-    return sortByLower switch
+    public async Task<IReadOnlyList<ProductImage>> GetProductImagesAsync(Guid productId, CancellationToken cancellationToken = default)
     {
-        "name" => sortDescending ? query.OrderByDescending(p => p.Name) : query.OrderBy(p => p.Name),
-        "price" => sortDescending ? query.OrderByDescending(p => p.Price) : query.OrderBy(p => p.Price),
-        "stock" => sortDescending ? query.OrderByDescending(p => p.Stock) : query.OrderBy(p => p.Stock),
-        "createdat" => sortDescending ? query.OrderByDescending(p => p.CreatedAt) : query.OrderBy(p => p.CreatedAt),
-        _ => query.OrderByDescending(p => p.CreatedAt)
-    };
-}
+        return await _dbContext.ProductImages
+            .Where(i => i.ProductId == productId && i.IsActive)
+            .OrderBy(i => i.DisplayOrder)
+            .ThenByDescending(i => i.IsMain)
+            .ToListAsync(cancellationToken);
+    }
+
+    private static IQueryable<Product> ApplySorting(IQueryable<Product> query, string? sortBy, bool sortDescending)
+    {
+        if (string.IsNullOrWhiteSpace(sortBy))
+            return query.OrderByDescending(p => p.CreatedAt);
+        
+        var sortByLower = sortBy.ToLower();
+        
+        return sortByLower switch
+        {
+            "name" => sortDescending ? query.OrderByDescending(p => p.Name) : query.OrderBy(p => p.Name),
+            "price" => sortDescending ? query.OrderByDescending(p => p.Price) : query.OrderBy(p => p.Price),
+            "stock" => sortDescending ? query.OrderByDescending(p => p.Stock) : query.OrderBy(p => p.Stock),
+            "createdat" => sortDescending ? query.OrderByDescending(p => p.CreatedAt) : query.OrderBy(p => p.CreatedAt),
+            _ => query.OrderByDescending(p => p.CreatedAt)
+        };
+    }
 }

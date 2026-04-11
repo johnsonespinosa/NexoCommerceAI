@@ -10,6 +10,7 @@ namespace NexoCommerceAI.Application.Features.Products.Handlers;
 
 public class DecreaseProductStockCommandHandler(
     IProductRepository productRepository,
+    IMediator mediator,
     ILogger<DecreaseProductStockCommandHandler> logger)
     : IRequestHandler<DecreaseProductStockCommand, bool>
 {
@@ -42,27 +43,20 @@ public class DecreaseProductStockCommandHandler(
                 throw new ValidationException($"Cannot decrease stock for deleted product '{product.Name}'");
             }
             
-            // Intentar disminuir el stock
-            try
-            {
-                product.DecreaseStock(request.Quantity);
-            }
-            catch (InvalidOperationException ex)
-            {
-                logger.InsufficientStock(product.Id, oldStock, request.Quantity);
-                throw new ValidationException($"Insufficient stock for product '{product.Name}'. Available: {oldStock}, Requested: {request.Quantity}");
-            }
+            // Intentar disminuir el stock (esto generará eventos de dominio internamente)
+            product.DecreaseStock(request.Quantity);
             
             await productRepository.UpdateAsync(product, cancellationToken);
             await productRepository.SaveChangesAsync(cancellationToken);
             
-            logger.StockDecreased(request.ProductId, oldStock, product.Stock);
-            
-            // Verificar si el producto ahora tiene stock bajo
-            if (product.IsLowStock())
+            // Publicar eventos de dominio
+            foreach (var domainEvent in product.DomainEvents)
             {
-                logger.LowStockWarning(product.Id, product.Name, product.Stock);
+                await mediator.Publish(domainEvent, cancellationToken);
             }
+            product.ClearDomainEvents();
+            
+            logger.StockDecreased(request.ProductId, oldStock, product.Stock);
             
             return true;
         }

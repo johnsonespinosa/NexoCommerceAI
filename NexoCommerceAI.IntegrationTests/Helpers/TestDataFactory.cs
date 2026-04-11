@@ -5,12 +5,12 @@ namespace NexoCommerceAI.IntegrationTests.Helpers;
 
 public static class TestDataFactory
 {
-    public static Category CreateCategory(string name, string? slug = null)
+    public static Category CreateCategory(string? name, string? slug = null)
     {
         return Category.Create(name, slug);
     }
 
-    public static Product CreateProduct(string name, Guid categoryId, decimal price, int stock, bool isFeatured = false)
+    public static Product CreateProduct(string? name, Guid categoryId, decimal price, int stock, bool isFeatured = false)
     {
         return Product.Create(name, categoryId, price: price, stock: stock, isFeatured: isFeatured);
     }

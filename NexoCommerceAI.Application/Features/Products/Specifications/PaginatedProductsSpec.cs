@@ -10,7 +10,7 @@ public sealed class PaginatedProductsSpec : Specification<Product>
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             Query.Where(p => p.Name.Contains(searchTerm) || 
-                             p.Description.Contains(searchTerm));
+                             p.Description!.Contains(searchTerm));
         }
         
         Query.Where(p => !p.IsDeleted && p.IsActive)

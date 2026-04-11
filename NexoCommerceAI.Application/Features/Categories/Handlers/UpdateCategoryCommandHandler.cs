@@ -27,13 +27,13 @@ public class UpdateCategoryCommandHandler(
             Func<string, Task<bool>>? isNameUnique = null;
             Func<string, Task<bool>>? isSlugUnique = null;
             
-            if (request.Name != null && request.Name != category.Name)
+            if (request.Name != category.Name)
             {
                 isNameUnique = async name => 
                     await categoryRepository.IsNameUniqueAsync(name, request.Id, cancellationToken);
             }
             
-            if (request.Slug != null && request.Slug != category.Slug)
+            if (request.Slug != category.Slug)
             {
                 isSlugUnique = async slug => 
                     await categoryRepository.IsSlugUniqueAsync(slug, request.Id, cancellationToken);

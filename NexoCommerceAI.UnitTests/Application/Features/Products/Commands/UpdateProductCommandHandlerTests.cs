@@ -34,14 +34,14 @@ public class UpdateProductCommandHandlerTests
         var productId = Guid.NewGuid();
         var categoryId = Guid.NewGuid();
         var command = new UpdateProductCommand
-        {
-            Id = productId,
-            Name = "Updated Product",
-            Price = 150m,
-            Stock = 20
-        };
+        (
+            Id: productId,
+            Name: "Updated Product",
+            Price: 150m,
+            Stock: 20
+        );
         
-        var category = Category.Create("Electronics");
+        Category.Create("Electronics");
         var product = Product.Create("Original Product", categoryId, price: 100m, stock: 10);
 
         _productRepositoryMock.Setup(r => r.GetByIdAsync(productId, It.IsAny<CancellationToken>()))
@@ -63,7 +63,7 @@ public class UpdateProductCommandHandlerTests
     public async Task Handle_ShouldThrowNotFoundException_WhenProductNotFound()
     {
         // Arrange
-        var command = new UpdateProductCommand { Id = Guid.NewGuid(), Name = "Updated Product" };
+        var command = new UpdateProductCommand ( Id: Guid.NewGuid(), Name: "Updated Product" );
 
         _productRepositoryMock.Setup(r => r.GetByIdAsync(command.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Product?)null);
@@ -78,11 +78,10 @@ public class UpdateProductCommandHandlerTests
         // Arrange
         var productId = Guid.NewGuid();
         var newCategoryId = Guid.NewGuid();
-        var command = new UpdateProductCommand
-        {
-            Id = productId,
-            CategoryId = newCategoryId
-        };
+        var command = new UpdateProductCommand(
+            Id: productId,
+            CategoryId: newCategoryId
+            );
         
         var category = Category.Create("Electronics");
         var product = Product.Create("Test Product", category.Id, price: 100m, stock: 10);

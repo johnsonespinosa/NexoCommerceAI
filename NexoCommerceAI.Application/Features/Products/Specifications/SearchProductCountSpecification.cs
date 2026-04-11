@@ -18,7 +18,7 @@ public class SearchProductCountSpecification : Specification<Product>
         {
             var normalized = search.Trim().ToLower();
             Query.Where(product => product.Name.Contains(normalized, StringComparison.CurrentCultureIgnoreCase) ||
-                                   product.Description.Contains(normalized, StringComparison.CurrentCultureIgnoreCase));
+                                   product.Description!.Contains(normalized, StringComparison.CurrentCultureIgnoreCase));
         }
         
         if (categoryId.HasValue)

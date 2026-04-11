@@ -4,22 +4,25 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NexoCommerceAI.Application.Common.Interfaces;
 using NexoCommerceAI.Application.Common.Settings;
+using NexoCommerceAI.Application.Features.Products.Models;
 using NexoCommerceAI.Infrastructure.Data;
 using NexoCommerceAI.Infrastructure.Data.Interceptors;
 using NexoCommerceAI.Infrastructure.Data.Repositories;
+using NexoCommerceAI.Infrastructure.Outbox;
 using NexoCommerceAI.Infrastructure.Services;
+using NexoCommerceAI.Infrastructure.Services.Background;
+using NexoCommerceAI.Infrastructure.Services.EventBus;
 
 namespace NexoCommerceAI.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static void AddInfrastructure(
+    public static IServiceCollection AddInfrastructure(
         this IServiceCollection services, 
         IConfiguration configuration,
         IHostEnvironment environment) 
     {
         // Database Context
-        services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<AuditableEntityInterceptor>();
 
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
@@ -34,10 +37,13 @@ public static class DependencyInjection
             });
             options.AddInterceptors(interceptor);
                 
-            // Usar el environment en lugar de builder
             options.EnableSensitiveDataLogging(environment.IsDevelopment());
             options.EnableDetailedErrors(environment.IsDevelopment());
         });
+
+        // Registrar IApplicationDbContext
+        services.AddScoped<IApplicationDbContext>(provider => 
+            provider.GetRequiredService<ApplicationDbContext>());
 
         // Repositories
         services.AddScoped(typeof(IRepositoryAsync<>), typeof(RepositoryAsync<>));
@@ -72,6 +78,29 @@ public static class DependencyInjection
             services.AddMemoryCache();
             services.AddSingleton<ICacheService, MemoryCacheService>();
         }
+        
+        // Elasticsearch
+        services.Configure<ElasticSearchSettings>(
+            configuration.GetSection("ElasticSearch"));
+        services.AddSingleton(typeof(ISearchService<ProductDocument>), typeof(ElasticSearchService));
 
+        // Outbox
+        services.Configure<OutboxSettings>(
+            configuration.GetSection("Outbox"));
+        services.AddScoped<IOutboxRepository, OutboxRepository>();
+        services.AddScoped<OutboxProcessor>();
+        services.AddHostedService<OutboxBackgroundService>();
+        
+        // Event Bus
+        services.AddSingleton<IEventBus, InMemoryEventBus>();
+        
+        // Configuración de Cloudinary
+        services.Configure<CloudinarySettings>(
+            configuration.GetSection("Cloudinary"));
+        
+        // Registrar servicios de imágenes
+        services.AddScoped<IImageStorageService, CloudinaryImageStorageService>();
+        
+        return services;
     }
 }

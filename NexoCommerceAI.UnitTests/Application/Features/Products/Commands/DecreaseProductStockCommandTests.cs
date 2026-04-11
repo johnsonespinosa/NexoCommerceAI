@@ -1,3 +1,4 @@
+using MediatR;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NexoCommerceAI.Application.Common.Exceptions;
@@ -13,14 +14,19 @@ namespace NexoCommerceAI.UnitTests.Application.Features.Products.Commands;
 public class DecreaseProductStockCommandTests
 {
     private readonly Mock<IProductRepository> _productRepositoryMock;
+    private readonly Mock<IMediator> _mediatorMock;
     private readonly Mock<ILogger<DecreaseProductStockCommandHandler>> _loggerMock;
     private readonly DecreaseProductStockCommandHandler _handler;
     
     public DecreaseProductStockCommandTests()
     {
         _productRepositoryMock = new Mock<IProductRepository>();
+        _mediatorMock = new Mock<IMediator>();
         _loggerMock = new Mock<ILogger<DecreaseProductStockCommandHandler>>();
-        _handler = new DecreaseProductStockCommandHandler(_productRepositoryMock.Object, _loggerMock.Object);
+        _handler = new DecreaseProductStockCommandHandler(
+            _productRepositoryMock.Object, 
+            _mediatorMock.Object, 
+            _loggerMock.Object);
     }
     
     [Fact]
@@ -43,6 +49,9 @@ public class DecreaseProductStockCommandTests
         Assert.Equal(7, product.Stock);
         _productRepositoryMock.Verify(x => x.UpdateAsync(product, It.IsAny<CancellationToken>()), Times.Once);
         _productRepositoryMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        
+        // Verificar que se publicaron eventos de dominio
+        _mediatorMock.Verify(x => x.Publish(It.IsAny<INotification>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
     
     [Fact]
@@ -85,6 +94,9 @@ public class DecreaseProductStockCommandTests
         Assert.Contains("Insufficient stock", exception.Message);
         Assert.Contains("Available: 3", exception.Message);
         Assert.Equal(3, product.Stock); // Stock no debe cambiar
+        
+        // Verificar que NO se publicaron eventos
+        _mediatorMock.Verify(x => x.Publish(It.IsAny<INotification>(), It.IsAny<CancellationToken>()), Times.Never);
     }
     
     [Fact]
@@ -157,7 +169,7 @@ public class DecreaseProductStockCommandTests
     }
     
     [Fact]
-    public async Task Handle_WhenStockBecomesLow_ShouldLogWarning()
+    public async Task Handle_WhenStockBecomesLow_ShouldLogWarningAndPublishEvent()
     {
         // Arrange
         var productId = Guid.NewGuid();
@@ -173,7 +185,11 @@ public class DecreaseProductStockCommandTests
         
         // Assert
         Assert.True(result);
-        Assert.True(product.IsLowStock(5));
+        Assert.True(product.IsLowStock());
+        
+        // Verificar que se publicó el evento de stock bajo
+        _mediatorMock.Verify(x => x.Publish(It.Is<INotification>(n => n.GetType().Name == "StockLowEvent"), It.IsAny<CancellationToken>()), Times.Once);
+        
         // Verificar que se llamó al log de advertencia
         _loggerMock.Verify(
             x => x.Log(
@@ -183,5 +199,28 @@ public class DecreaseProductStockCommandTests
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
+    }
+    
+    [Fact]
+    public async Task Handle_WhenStockBecomesZero_ShouldPublishOutOfStockEvent()
+    {
+        // Arrange
+        var productId = Guid.NewGuid();
+        var categoryId = Guid.NewGuid();
+        var product = Product.Create("Test Product", categoryId, price: 100m, stock: 3);
+        var command = new DecreaseProductStockCommand(productId, 3); // Dejará stock en 0
+        
+        _productRepositoryMock.Setup(x => x.GetByIdAsync(productId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(product);
+        
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+        
+        // Assert
+        Assert.True(result);
+        Assert.Equal(0, product.Stock);
+        
+        // Verificar que se publicó el evento de out of stock
+        _mediatorMock.Verify(x => x.Publish(It.Is<INotification>(n => n.GetType().Name == "OutOfStockEvent"), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

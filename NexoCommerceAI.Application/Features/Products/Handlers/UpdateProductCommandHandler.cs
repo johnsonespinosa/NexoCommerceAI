@@ -50,7 +50,7 @@ public class UpdateProductCommandHandler(
             
             // Actualizar producto
             product.Update(
-                request.Name,
+                request.Name!,
                 request.Slug,
                 request.Description,
                 request.Price,

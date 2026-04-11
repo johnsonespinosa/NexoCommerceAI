@@ -5,7 +5,7 @@ namespace NexoCommerceAI.Application.Features.Products.Models;
 public record ProductResponse
 {
     public Guid Id { get; init; }
-    public string Name { get; init; } = default!;
+    public string? Name { get; init; } = default!;
     public string Slug { get; init; } = default!;
     public string? Description { get; init; }
     public decimal Price { get; init; }

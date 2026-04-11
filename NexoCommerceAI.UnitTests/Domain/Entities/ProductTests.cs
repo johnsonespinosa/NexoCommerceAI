@@ -91,7 +91,7 @@ public class ProductTests
 
     [Theory]
     [MemberData(nameof(InvalidProductData))]
-    public void Create_WithInvalidData_ShouldThrowException(string name, string slug, string description, 
+    public void Create_WithInvalidData_ShouldThrowException(string? name, string slug, string description, 
         decimal price, decimal? compareAtPrice, 
         string sku, int stock)
     {

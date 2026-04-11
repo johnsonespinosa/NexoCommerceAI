@@ -1,5 +1,3 @@
-// Application/Features/Products/Commands/DecreaseProductStock/DecreaseProductStockCommand.cs
-
 using MediatR;
 using NexoCommerceAI.Application.Common.Attributes;
 

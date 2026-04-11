@@ -33,14 +33,14 @@ public class CreateProductCommandHandlerTests
         // Arrange
         var categoryId = Guid.NewGuid();
         var command = new CreateProductCommand
-        {
-            Name = "Test Product",
-            CategoryId = categoryId,
-            Price = 100m,
-            Stock = 10,
-            Description = "Test Description",
-            IsFeatured = false
-        };
+        (
+            Name: "Test Product",
+            Description: "Test Description",
+            Price: 100m,
+            CategoryId: categoryId,
+            Stock: 10,
+            IsFeatured: false
+        );
         
         var category = Category.Create("Electronics");
 
@@ -70,12 +70,12 @@ public class CreateProductCommandHandlerTests
     {
         // Arrange
         var command = new CreateProductCommand
-        {
-            Name = "Test Product",
-            CategoryId = Guid.NewGuid(),
-            Price = 100m,
-            Stock = 10
-        };
+        (
+            Name: "Test Product",
+            CategoryId: Guid.NewGuid(),
+            Price: 100m,
+            Stock: 10
+        );
 
         _categoryRepositoryMock.Setup(r => r.GetByIdAsync(command.CategoryId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Category?)null);
@@ -91,13 +91,13 @@ public class CreateProductCommandHandlerTests
         // Arrange
         var categoryId = Guid.NewGuid();
         var command = new CreateProductCommand
-        {
-            Name = "Test Product",
-            CategoryId = categoryId,
-            Price = 100m,
-            Stock = 10,
-            Sku = "EXISTING-SKU"
-        };
+        (
+            Name: "Test Product",
+            CategoryId: categoryId,
+            Price: 100m,
+            Stock: 10,
+            Sku: "EXISTING-SKU"
+        );
         
         var category = Category.Create("Electronics");
 
@@ -117,13 +117,13 @@ public class CreateProductCommandHandlerTests
         // Arrange
         var categoryId = Guid.NewGuid();
         var command = new CreateProductCommand
-        {
-            Name = "Test Product",
-            CategoryId = categoryId,
-            Price = 100m,
-            Stock = 10,
-            Slug = "existing-slug"
-        };
+        (
+            Name: "Test Product",
+            CategoryId: categoryId,
+            Price: 100m,
+            Stock: 10,
+            Slug: "existing-slug"
+        );
         
         var category = Category.Create("Electronics");
 

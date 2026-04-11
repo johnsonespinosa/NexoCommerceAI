@@ -46,4 +46,6 @@ public interface IProductRepository : IRepositoryAsync<Product>
         decimal? minPrice = null,
         decimal? maxPrice = null,
         CancellationToken cancellationToken = default);
+    
+    Task<IReadOnlyList<ProductImage>> GetProductImagesAsync(Guid productId, CancellationToken cancellationToken = default);
 }

@@ -87,6 +87,10 @@ namespace NexoCommerceAI.Infrastructure.Data.Migrations
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("uuid");
 
+                    b.Property<decimal?>("CompareAtPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -96,7 +100,6 @@ namespace NexoCommerceAI.Infrastructure.Data.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
@@ -110,6 +113,11 @@ namespace NexoCommerceAI.Infrastructure.Data.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
+                    b.Property<bool>("IsFeatured")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -118,6 +126,11 @@ namespace NexoCommerceAI.Infrastructure.Data.Migrations
                     b.Property<decimal>("Price")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Sku")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Slug")
                         .IsRequired()
@@ -137,11 +150,21 @@ namespace NexoCommerceAI.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedAt");
-
                     b.HasIndex("IsActive");
 
                     b.HasIndex("IsDeleted");
+
+                    b.HasIndex("IsFeatured");
+
+                    b.HasIndex("Name");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Name"), "GIN");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Name"), new[] { "gin_trgm_ops" });
+
+                    b.HasIndex("Price");
+
+                    b.HasIndex("Sku")
+                        .IsUnique();
 
                     b.HasIndex("Slug")
                         .IsUnique();
@@ -149,6 +172,12 @@ namespace NexoCommerceAI.Infrastructure.Data.Migrations
                     b.HasIndex("CategoryId", "IsActive");
 
                     b.HasIndex("IsActive", "IsDeleted");
+
+                    b.HasIndex("IsActive", "Stock");
+
+                    b.HasIndex("CategoryId", "IsFeatured", "IsActive");
+
+                    b.HasIndex("IsActive", "IsFeatured", "Price");
 
                     b.ToTable("Products", (string)null);
                 });

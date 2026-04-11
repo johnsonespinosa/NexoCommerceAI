@@ -65,13 +65,13 @@ public class ProductsControllerTests(CustomWebApplicationFactory factory) : ICla
         var category = await dbContext.Categories.FirstAsync();
 
         var command = new CreateProductCommand
-        {
-            Name = "Integration Test Product",
-            CategoryId = category.Id,
-            Price = 199.99m,
-            Stock = 15,
-            Description = "Test Description"
-        };
+        (
+            Name: "Integration Test Product",
+            CategoryId: category.Id,
+            Price: 199.99m,
+            Stock: 15,
+            Description: "Test Description"
+        );
 
         // Act
         var response = await _client.PostAsJsonAsync("/api/products", command);
@@ -93,11 +93,11 @@ public class ProductsControllerTests(CustomWebApplicationFactory factory) : ICla
         var product = await dbContext.Products.FirstAsync();
 
         var command = new UpdateProductCommand
-        {
-            Id = product.Id,
-            Name = "Updated Product Name",
-            Price = 299.99m
-        };
+        (
+            Id: product.Id,
+            Name: "Updated Product Name",
+            Price: 299.99m
+        );
 
         // Act
         var response = await _client.PutAsJsonAsync($"/api/products/{product.Id}", command);
