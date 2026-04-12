@@ -51,6 +51,8 @@ public static class DependencyInjection
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>(); 
+        services.AddScoped<ICartRepository, CartRepository>(); 
+        services.AddScoped<IWishlistRepository, WishlistRepository>(); 
 
         // Infrastructure Services
         services.AddScoped<IJwtTokenService, JwtTokenService>();
@@ -78,6 +80,8 @@ public static class DependencyInjection
             services.AddMemoryCache();
             services.AddSingleton<ICacheService, MemoryCacheService>();
         }
+        
+        services.AddScoped<ICartCacheService, CartCacheService>();
         
         // Elasticsearch
         services.Configure<ElasticSearchSettings>(

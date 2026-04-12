@@ -13,6 +13,10 @@ public interface IApplicationDbContext
     DbSet<Role> Roles { get; }
     DbSet<ProductImage> ProductImages { get; }
     DbSet<OutboxMessage> OutboxMessages { get; }
+    public DbSet<Cart> Carts { get; }
+    public DbSet<CartItem> CartItems { get; }
+    public DbSet<Wishlist> Wishlists { get; }
+    public DbSet<WishlistItem> WishlistItems { get; }
     
     /// <summary>
     /// Acceso a funcionalidades de base de datos como transacciones y estrategias de ejecución

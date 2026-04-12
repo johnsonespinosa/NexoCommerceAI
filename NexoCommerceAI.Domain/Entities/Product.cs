@@ -16,6 +16,8 @@ public class Product : BaseEntity
     public Guid CategoryId { get; private set; }
     public Category Category { get; private set; } = default!;
     public ICollection<ProductImage> Images { get; private set; } = new List<ProductImage>();
+    
+    public string? ImageUrl => GetMainImage()?.ImageUrl;
 
     private Product(string name, string slug, string? description, decimal price, decimal? compareAtPrice, 
                     string sku, int stock, bool isFeatured, Guid categoryId)
@@ -382,12 +384,12 @@ public class Product : BaseEntity
     
     public ProductImage? GetMainImage()
     {
-        return Images.FirstOrDefault(i => i.IsMain);
+        return Images.FirstOrDefault(productImage => productImage.IsMain);
     }
     
     public IReadOnlyList<ProductImage> GetImagesOrdered()
     {
-        return Images.OrderBy(i => i.DisplayOrder).ThenByDescending(i => i.IsMain).ToList();
+        return Images.OrderBy(productImage => productImage.DisplayOrder).ThenByDescending(i => i.IsMain).ToList();
     }
     
     private static string GenerateSku(string? name)

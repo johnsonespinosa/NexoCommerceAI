@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using NexoCommerceAI.Domain.Entities;
-using NexoCommerceAI.Infrastructure.Outbox;
 
 namespace NexoCommerceAI.Infrastructure.Data.Configurations;
 
@@ -21,7 +20,21 @@ public class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage
             .IsRequired()
             .HasColumnType("jsonb");
         
+        builder.Property(x => x.OccurredOn)
+            .IsRequired();
+        
+        builder.Property(x => x.ProcessedOn);
+        
+        builder.Property(x => x.Error);
+        
+        builder.Property(x => x.RetryCount);
+        
+        // Ignorar propiedad calculada
+        builder.Ignore(x => x.IsProcessed);
+        
+        // Índices - NO usar x.IsProcessed porque fue ignorado
         builder.HasIndex(x => x.ProcessedOn);
-        builder.HasIndex(x => new { x.IsProcessed, x.OccurredOn });
+        // Este índice no se puede crear porque IsProcessed no está mapeado
+        // builder.HasIndex(x => new { x.IsProcessed, x.OccurredOn });
     }
 }
