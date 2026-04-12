@@ -47,32 +47,41 @@ public static class DependencyInjection
             {
                 builder.WithOrigins("https://localhost:4200") // frontend dev
                     .AllowAnyHeader()
-                    .AllowAnyMethod();
+                    .AllowAnyMethod()
+                    .AllowCredentials();
             });
         });
 
-        // Swagger (si quieres agregar configuración avanzada)
+        // Swagger
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(swaggerGenOptions =>
         {
             swaggerGenOptions.SwaggerDoc("v1", new OpenApiInfo
             {
-                Title = "Nexo Commerce AI API",
+                Title = "NexoCommerceAI API",
                 Version = "v1",
-                Description = "Nexo Commerce AI v1",
+                Description = "E-commerce API with AI capabilities",
                 Contact = new OpenApiContact
                 {
-                    Name = "Development Team",
-                    Email = "dev@company.com"
+                    Name = "NexoCommerceAI Team",
+                    Email = "support@nexocommerceai.com"
+                },
+                License = new OpenApiLicense
+                {
+                    Name = "MIT",
+                    Url = new Uri("https://opensource.org/licenses/MIT")
                 }
             });
-            
+    
             // Incluir comentarios XML
             var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
             var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-            swaggerGenOptions.IncludeXmlComments(xmlPath);
+            if (File.Exists(xmlPath))
+            {
+                swaggerGenOptions.IncludeXmlComments(xmlPath);
+            }
     
-            // Configurar seguridad JWT
+            // Configurar autenticación JWT
             swaggerGenOptions.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Name = "Authorization",
@@ -81,6 +90,21 @@ public static class DependencyInjection
                 BearerFormat = "JWT",
                 In = ParameterLocation.Header,
                 Description = "Ingrese el token JWT"
+            });
+    
+            swaggerGenOptions.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
             });
         });
     }

@@ -1,3 +1,7 @@
+using System.Globalization;
+using System.Security.Claims;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using NexoCommerceAI.Api;
 using NexoCommerceAI.Api.Extensions;
@@ -41,12 +45,50 @@ builder.Services.AddApiSecurity(builder.Configuration);
 // ===========================
 builder.Services.AddRateLimiter(options =>
 {
-    options.AddFixedWindowLimiter("AuthPolicy", opt =>
+    options.RejectionStatusCode = 429;
+    
+    // Política global
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+    {
+        var userId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? 
+                     httpContext.Request.Headers.Host.ToString();
+        
+        return RateLimitPartition.GetFixedWindowLimiter(userId, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 100,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
+    });
+    
+    // Política específica para login
+    options.AddFixedWindowLimiter("login", opt =>
     {
         opt.PermitLimit = 5;
         opt.Window = TimeSpan.FromMinutes(1);
         opt.QueueLimit = 0;
     });
+    
+    // Política específica para register
+    options.AddFixedWindowLimiter("register", opt =>
+    {
+        opt.PermitLimit = 3;
+        opt.Window = TimeSpan.FromHours(1);
+        opt.QueueLimit = 0;
+    });
+    
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = 429;
+        context.HttpContext.Response.Headers.RetryAfter = "60";
+        
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            context.HttpContext.Response.Headers.RetryAfter = retryAfter.TotalSeconds.ToString(CultureInfo.InvariantCulture);
+        }
+        
+        await context.HttpContext.Response.WriteAsync("Too many requests. Please try again later.", cancellationToken);
+    };
 });
 
 // Controllers
@@ -59,28 +101,47 @@ var app = builder.Build();
 // ===========================
 app.UseRateLimiter();
 
+// Configurar Swagger solo en desarrollo
 if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 {
     app.UseSwagger();
     app.UseSwaggerUI(swaggerUiOptions =>
     {
-        // Endpoint principal
-        swaggerUiOptions.SwaggerEndpoint("/swagger/v1/swagger.json", "Ecommerce API v1");
-            
-        // Configuración UI
-        swaggerUiOptions.RoutePrefix = string.Empty;              // Raíz del sitio
-        swaggerUiOptions.DocumentTitle = "Ecommerce API Documentation";
-        swaggerUiOptions.DefaultModelsExpandDepth(-1);            // Esconde modelos
-        swaggerUiOptions.DisplayRequestDuration();                // Muestra tiempo de respuesta
-        swaggerUiOptions.EnableTryItOutByDefault();               // Try it out activado
-        swaggerUiOptions.EnableDeepLinking();                     // Deep linking para endpoints
-        swaggerUiOptions.ShowExtensions();                        // Muestra extensiones
+        swaggerUiOptions.SwaggerEndpoint("/swagger/v1/swagger.json", "NexoCommerceAI API v1");
+        swaggerUiOptions.RoutePrefix = "swagger";
+        swaggerUiOptions.DocumentTitle = "NexoCommerceAI API Documentation";
+        swaggerUiOptions.DisplayRequestDuration();
+        swaggerUiOptions.EnableTryItOutByDefault();
+        swaggerUiOptions.EnableDeepLinking();
+        swaggerUiOptions.ShowExtensions();
     });
 }
 
 // Global Exception Handling
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseRequestLogging();
+
+// Health Checks
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var response = new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(e => new
+            {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                description = e.Value.Description,
+                duration = e.Value.Duration
+            }),
+            totalDuration = report.TotalDuration
+        };
+        await context.Response.WriteAsJsonAsync(response);
+    }
+});
 
 app.UseHttpsRedirection();
 app.UseSerilogRequestLogging();

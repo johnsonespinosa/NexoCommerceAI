@@ -8,6 +8,7 @@ using NexoCommerceAI.Application.Features.Products.Models;
 using NexoCommerceAI.Infrastructure.Data;
 using NexoCommerceAI.Infrastructure.Data.Interceptors;
 using NexoCommerceAI.Infrastructure.Data.Repositories;
+using NexoCommerceAI.Infrastructure.HealthChecks;
 using NexoCommerceAI.Infrastructure.Outbox;
 using NexoCommerceAI.Infrastructure.Services;
 using NexoCommerceAI.Infrastructure.Services.Background;
@@ -116,6 +117,11 @@ public static class DependencyInjection
         
         // Stripe Payment Service
         services.AddScoped<IPaymentService, StripePaymentService>();
+        
+        services.AddHealthChecks()
+            .AddCheck<DatabaseHealthCheck>("database")
+            .AddCheck<RedisHealthCheck>("redis")
+            .AddCheck<StripeHealthCheck>("stripe");
         
         return services;
     }
