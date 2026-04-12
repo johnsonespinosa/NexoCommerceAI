@@ -123,6 +123,12 @@ public static class DependencyInjection
             .AddCheck<RedisHealthCheck>("redis")
             .AddCheck<StripeHealthCheck>("stripe");
         
+        // Webhook Services
+        services.AddScoped<IStripeWebhookService, StripeWebhookService>();
+        services.AddScoped<IWebhookEventRepository, WebhookEventRepository>();
+        services.AddScoped<IPaymentHistoryRepository, PaymentHistoryRepository>();
+        services.AddScoped<WebhookProcessingService>();
+        
         return services;
     }
 }

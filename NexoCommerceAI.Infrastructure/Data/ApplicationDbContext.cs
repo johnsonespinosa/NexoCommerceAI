@@ -24,6 +24,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<OrderStatusHistory> OrderStatusHistories => Set<OrderStatusHistory>();
     public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
+    public DbSet<PaymentHistory> PaymentHistories => Set<PaymentHistory>();
 
     // Constructor para uso normal (sin interceptor)
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) 

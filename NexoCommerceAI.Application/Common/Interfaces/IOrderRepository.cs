@@ -11,4 +11,5 @@ public interface IOrderRepository : IRepositoryAsync<Order>
     Task<IReadOnlyList<Order>> GetByStatusAsync(OrderStatus status, CancellationToken cancellationToken = default);
     Task<int> GetCountByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Order>> GetPendingOrdersAsync(DateTime olderThan, CancellationToken cancellationToken = default);
+    Task<Order?> GetByPaymentIntentIdAsync(string paymentIntentId, CancellationToken cancellationToken = default);
 }

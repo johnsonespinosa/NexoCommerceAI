@@ -60,4 +60,16 @@ public class OrderRepository(ApplicationDbContext dbContext)
             .Include(o => o.Items)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<Order?> GetByPaymentIntentIdAsync(string paymentIntentId, CancellationToken cancellationToken = default)
+    {
+        // Buscar orden a través de PaymentHistory o metadata
+        var paymentHistory = await _dbContext.PaymentHistories
+            .FirstOrDefaultAsync(h => h.PaymentIntentId == paymentIntentId, cancellationToken);
+    
+        if (paymentHistory == null)
+            return null;
+    
+        return await GetByIdAsync(paymentHistory.OrderId, cancellationToken);
+    }
 }

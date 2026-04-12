@@ -22,6 +22,7 @@ public interface IApplicationDbContext
     public DbSet<OrderItem> OrderItems { get; }
     public DbSet<OrderStatusHistory> OrderStatusHistories { get; }
     public DbSet<PaymentTransaction> PaymentTransactions { get; }
+    public DbSet<PaymentHistory> PaymentHistories { get; }
     
     /// <summary>
     /// Acceso a funcionalidades de base de datos como transacciones y estrategias de ejecución
