@@ -13,6 +13,7 @@ public interface IApplicationDbContext
     DbSet<Role> Roles { get; }
     DbSet<ProductImage> ProductImages { get; }
     DbSet<OutboxMessage> OutboxMessages { get; }
+    DbSet<OutboxDeadLetter> OutboxDeadLetters { get; }
     public DbSet<Cart> Carts { get; }
     public DbSet<CartItem> CartItems { get; }
     public DbSet<Wishlist> Wishlists { get; }

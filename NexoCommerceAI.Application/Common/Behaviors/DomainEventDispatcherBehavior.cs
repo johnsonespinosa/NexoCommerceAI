@@ -11,7 +11,8 @@ public class DomainEventDispatcherBehavior<TRequest, TResponse>(
     IApplicationDbContext dbContext,
     IMediator mediator,
     IOutboxRepository outboxRepository,
-    ILogger<DomainEventDispatcherBehavior<TRequest, TResponse>> logger)
+    ILogger<DomainEventDispatcherBehavior<TRequest, TResponse>> logger,
+    ICurrentUserService currentUserService)
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
@@ -21,19 +22,23 @@ public class DomainEventDispatcherBehavior<TRequest, TResponse>(
         
         // Obtener entidades con eventos de dominio
         var entitiesWithEvents = dbContext.ChangeTracker.Entries<BaseEntity>()
-            .Where(e => e.Entity.DomainEvents.Count != 0 || e.Entity.IntegrationEvents.Count != 0)
+            .Where(e => e.Entity.DomainEvents.Any() || e.Entity.IntegrationEvents.Any())
             .Select(e => e.Entity)
             .ToList();
         
-        if (entitiesWithEvents.Count == 0)
+        if (!entitiesWithEvents.Any())
             return response;
         
-        // 1. Primero, publicar eventos de dominio (dentro de la transacción actual)
+        var correlationId = Guid.NewGuid().ToString();
+        var userId = currentUserService.UserId?.ToString() ?? "system";
+        
+        // 1. Publicar eventos de dominio (dentro de la transacción actual)
         var domainEvents = entitiesWithEvents.SelectMany(e => e.DomainEvents).ToList();
         
         foreach (var domainEvent in domainEvents)
         {
-            logger.LogDebug("Publishing domain event: {EventType}", domainEvent.GetType().Name);
+            logger.LogDebug("Publishing domain event: {EventType} for correlation {CorrelationId}", 
+                domainEvent.GetType().Name, correlationId);
             await mediator.Publish(domainEvent, cancellationToken);
         }
         
@@ -42,16 +47,21 @@ public class DomainEventDispatcherBehavior<TRequest, TResponse>(
         
         foreach (var integrationEvent in integrationEvents)
         {
+            var aggregateId = GetAggregateId(integrationEvent);
             var outboxMessage = new OutboxMessage
             {
                 Id = integrationEvent.Id,
                 EventType = integrationEvent.GetType().AssemblyQualifiedName!,
                 Content = JsonSerializer.Serialize(integrationEvent, integrationEvent.GetType()),
-                OccurredOn = integrationEvent.OccurredOn
+                OccurredOn = integrationEvent.OccurredOn,
+                AggregateId = aggregateId,
+                UserId = userId,
+                CorrelationId = correlationId
             };
             
             await outboxRepository.AddAsync(outboxMessage, cancellationToken);
-            logger.LogDebug("Added integration event to outbox: {EventType}", integrationEvent.GetType().Name);
+            logger.LogDebug("Added integration event to outbox: {EventType} for correlation {CorrelationId}", 
+                integrationEvent.GetType().Name, correlationId);
         }
         
         // 3. Limpiar eventos de las entidades
@@ -64,6 +74,19 @@ public class DomainEventDispatcherBehavior<TRequest, TResponse>(
         // 4. Guardar cambios (incluyendo mensajes de outbox)
         await dbContext.SaveChangesAsync(cancellationToken);
         
+        logger.LogInformation("Dispatched {DomainCount} domain events and {IntegrationCount} integration events for correlation {CorrelationId}", 
+            domainEvents.Count, integrationEvents.Count, correlationId);
+        
         return response;
+    }
+    
+    private static string? GetAggregateId(IIntegrationEvent integrationEvent)
+    {
+        // Intentar obtener el aggregate ID por reflexión
+        var property = integrationEvent.GetType().GetProperty("OrderId") ??
+                       integrationEvent.GetType().GetProperty("ProductId") ??
+                       integrationEvent.GetType().GetProperty("UserId");
+        
+        return property?.GetValue(integrationEvent)?.ToString();
     }
 }

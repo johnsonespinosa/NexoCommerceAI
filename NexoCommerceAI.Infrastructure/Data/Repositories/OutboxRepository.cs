@@ -38,4 +38,13 @@ public class OutboxRepository(ApplicationDbContext dbContext) : IOutboxRepositor
             message.RetryCount++;
         }
     }
+
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var message = await dbContext.Set<OutboxMessage>().FindAsync([id], cancellationToken);
+        if (message != null)
+        {
+            dbContext.Set<OutboxMessage>().Remove(message);
+        }
+    }
 }
