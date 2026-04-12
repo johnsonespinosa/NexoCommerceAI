@@ -53,11 +53,13 @@ public static class DependencyInjection
         services.AddScoped<IRoleRepository, RoleRepository>(); 
         services.AddScoped<ICartRepository, CartRepository>(); 
         services.AddScoped<IWishlistRepository, WishlistRepository>(); 
+        services.AddScoped<IOrderRepository, OrderRepository>();
 
         // Infrastructure Services
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IPasswordHasherService, PasswordHasherService>();
+        services.AddScoped<IPaymentService, MockStripePaymentService>();
         
         // HTTP Context Accessor
         services.AddHttpContextAccessor();
