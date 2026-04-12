@@ -60,6 +60,10 @@ public static class DependencyInjection
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IPasswordHasherService, PasswordHasherService>();
         services.AddScoped<IPaymentService, MockStripePaymentService>();
+        services.AddScoped<IInventoryService, MockInventoryService>();
+        
+        services.Configure<OrderExpirationSettings>(configuration.GetSection("OrderExpiration"));
+        services.AddHostedService<OrderExpirationService>();
         
         // HTTP Context Accessor
         services.AddHttpContextAccessor();
