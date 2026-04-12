@@ -111,6 +111,12 @@ public static class DependencyInjection
         // Registrar servicios de imágenes
         services.AddScoped<IImageStorageService, CloudinaryImageStorageService>();
         
+        // Stripe Settings
+        services.Configure<StripeSettings>(configuration.GetSection("Stripe"));
+        
+        // Stripe Payment Service
+        services.AddScoped<IPaymentService, StripePaymentService>();
+        
         return services;
     }
 }

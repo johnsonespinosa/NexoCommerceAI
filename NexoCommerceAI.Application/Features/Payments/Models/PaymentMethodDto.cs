@@ -1,4 +1,4 @@
-namespace NexoCommerceAI.Application.Features.Orders.Models;
+namespace NexoCommerceAI.Application.Features.Payments.Models;
 
 public record PaymentMethodDto
 {

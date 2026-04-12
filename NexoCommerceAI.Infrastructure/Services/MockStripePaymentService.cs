@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using NexoCommerceAI.Application.Common.Interfaces;
 using NexoCommerceAI.Application.Features.Orders.Models;
+using NexoCommerceAI.Application.Features.Payments.Models;
 
 namespace NexoCommerceAI.Infrastructure.Services;
 

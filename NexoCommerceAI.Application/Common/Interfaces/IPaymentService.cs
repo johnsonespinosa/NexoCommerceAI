@@ -1,4 +1,4 @@
-using NexoCommerceAI.Application.Features.Orders.Models;
+using NexoCommerceAI.Application.Features.Payments.Models;
 
 namespace NexoCommerceAI.Application.Common.Interfaces;
 

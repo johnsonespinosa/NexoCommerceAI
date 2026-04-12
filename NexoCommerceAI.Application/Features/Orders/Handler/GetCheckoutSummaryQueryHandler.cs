@@ -4,6 +4,7 @@ using NexoCommerceAI.Application.Common.Interfaces;
 using NexoCommerceAI.Application.Features.Carts.Models;
 using NexoCommerceAI.Application.Features.Orders.Models;
 using NexoCommerceAI.Application.Features.Orders.Queries;
+using NexoCommerceAI.Application.Features.Payments.Models;
 
 namespace NexoCommerceAI.Application.Features.Orders.Handler;
 

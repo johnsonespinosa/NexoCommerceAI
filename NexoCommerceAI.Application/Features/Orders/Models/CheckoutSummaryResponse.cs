@@ -1,4 +1,5 @@
 using NexoCommerceAI.Application.Features.Carts.Models;
+using NexoCommerceAI.Application.Features.Payments.Models;
 
 namespace NexoCommerceAI.Application.Features.Orders.Models;
 

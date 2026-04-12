@@ -1,6 +1,10 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NexoCommerceAI.Application.Common.Interfaces;
+using NexoCommerceAI.Application.Features.Payments.Commands;
+using NexoCommerceAI.Domain.Enums;
+using Stripe;
 
 namespace NexoCommerceAI.Api.Controllers.v1;
 
@@ -8,7 +12,11 @@ namespace NexoCommerceAI.Api.Controllers.v1;
 [Route("api/webhooks")]
 [AllowAnonymous]
 [Produces("application/json")]
-public class WebhookController(IMediator mediator, ILogger<WebhookController> logger) : ControllerBase
+public class WebhookController(
+    IMediator mediator,
+    IOrderRepository orderRepository,
+    ILogger<WebhookController> logger)
+    : ControllerBase
 {
     /// <summary>
     /// Endpoint para webhooks de Stripe
@@ -16,26 +24,49 @@ public class WebhookController(IMediator mediator, ILogger<WebhookController> lo
     [HttpPost("stripe")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> HandleStripeWebhook([FromBody] StripeWebhookPayload payload)
+    public async Task<IActionResult> HandleStripeWebhook()
     {
-        logger.LogInformation("Received Stripe webhook: {Type}", payload.Type);
+        var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
         
         try
         {
-            switch (payload.Type)
+            // Verificar firma del webhook (en producción usar Stripe.WebhookSignature)
+            var stripeEvent = EventUtility.ConstructEvent(
+                json,
+                Request.Headers["Stripe-Signature"],
+                "whsec_test_webhook_secret"
+            );
+
+            logger.LogInformation("Received Stripe webhook: {Type}", stripeEvent.Type);
+
+            switch (stripeEvent.Type)
             {
                 case "payment_intent.succeeded":
-                    await HandlePaymentSuccess(payload);
+                    var paymentIntent = stripeEvent.Data.Object as PaymentIntent;
+                    await HandlePaymentIntentSucceeded(paymentIntent);
                     break;
+                    
                 case "payment_intent.payment_failed":
-                    await HandlePaymentFailure(payload);
+                    var failedPaymentIntent = stripeEvent.Data.Object as PaymentIntent;
+                    await HandlePaymentIntentFailed(failedPaymentIntent);
                     break;
+                    
+                case "charge.refunded":
+                    var refund = stripeEvent.Data.Object as Charge;
+                    await HandleChargeRefunded(refund);
+                    break;
+                    
                 default:
-                    logger.LogDebug("Unhandled webhook type: {Type}", payload.Type);
+                    logger.LogDebug("Unhandled webhook type: {Type}", stripeEvent.Type);
                     break;
             }
             
             return Ok();
+        }
+        catch (StripeException ex)
+        {
+            logger.LogError(ex, "Stripe webhook error");
+            return BadRequest();
         }
         catch (Exception ex)
         {
@@ -44,47 +75,54 @@ public class WebhookController(IMediator mediator, ILogger<WebhookController> lo
         }
     }
     
-    private async Task HandlePaymentSuccess(StripeWebhookPayload payload)
+    private async Task HandlePaymentIntentSucceeded(PaymentIntent? paymentIntent)
     {
-        var data = payload.Data?.Object;
-        if (data?.Metadata?.OrderId != null)
+        if (paymentIntent?.Metadata?.TryGetValue("OrderId", out var orderIdStr) == true &&
+            Guid.TryParse(orderIdStr, out var orderId))
         {
-            // Aquí se procesaría la confirmación de pago
-            logger.LogInformation("Payment succeeded for order {OrderId}", data.Metadata.OrderId);
+            logger.LogInformation("Payment succeeded for order {OrderId}", orderId);
+            
+            var result = await mediator.Send(new ConfirmPaymentCommand(orderId, paymentIntent.Id));
+            
+            if (result.Success)
+            {
+                logger.LogInformation("Order {OrderNumber} confirmed after payment", result.OrderNumber);
+            }
         }
     }
     
-    private async Task HandlePaymentFailure(StripeWebhookPayload payload)
+    private async Task HandlePaymentIntentFailed(PaymentIntent? paymentIntent)
     {
-        logger.LogWarning("Payment failed: {Error}", payload.Data?.Object?.LastPaymentError?.Message);
+        if (paymentIntent?.Metadata?.TryGetValue("OrderId", out var orderIdStr) == true &&
+            Guid.TryParse(orderIdStr, out var orderId))
+        {
+            logger.LogWarning("Payment failed for order {OrderId}: {Error}", 
+                orderId, paymentIntent.LastPaymentError?.Message);
+            
+            var order = await orderRepository.GetByIdAsync(orderId);
+            if (order != null && order.Status == OrderStatus.PaymentProcessing)
+            {
+                order.UpdateStatus(OrderStatus.Cancelled, paymentIntent.LastPaymentError?.Message);
+                await orderRepository.UpdateAsync(order);
+                await orderRepository.SaveChangesAsync();
+            }
+        }
     }
-}
-
-public class StripeWebhookPayload
-{
-    public string Id { get; set; } = string.Empty;
-    public string Type { get; set; } = string.Empty;
-    public StripeData? Data { get; set; }
-}
-
-public class StripeData
-{
-    public StripeObject? Object { get; set; }
-}
-
-public class StripeObject
-{
-    public string Id { get; set; } = string.Empty;
-    public StripeMetadata? Metadata { get; set; }
-    public StripeLastPaymentError? LastPaymentError { get; set; }
-}
-
-public class StripeMetadata
-{
-    public string? OrderId { get; set; }
-}
-
-public class StripeLastPaymentError
-{
-    public string Message { get; set; } = string.Empty;
+    
+    private async Task HandleChargeRefunded(Charge? charge)
+    {
+        if (charge?.Metadata?.TryGetValue("OrderId", out var orderIdStr) == true &&
+            Guid.TryParse(orderIdStr, out var orderId))
+        {
+            logger.LogInformation("Charge refunded for order {OrderId}", orderId);
+            
+            var order = await orderRepository.GetByIdAsync(orderId);
+            if (order != null)
+            {
+                order.UpdateStatus(OrderStatus.Refunded, "Payment refunded");
+                await orderRepository.UpdateAsync(order);
+                await orderRepository.SaveChangesAsync();
+            }
+        }
+    }
 }

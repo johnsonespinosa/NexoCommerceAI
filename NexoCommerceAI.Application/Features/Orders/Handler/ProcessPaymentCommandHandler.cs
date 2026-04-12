@@ -4,6 +4,7 @@ using NexoCommerceAI.Application.Common.Exceptions;
 using NexoCommerceAI.Application.Common.Interfaces;
 using NexoCommerceAI.Application.Features.Orders.Commands;
 using NexoCommerceAI.Application.Features.Orders.Models;
+using NexoCommerceAI.Application.Features.Payments.Models;
 using NexoCommerceAI.Domain.Entities;
 using NexoCommerceAI.Domain.Enums;
 
