@@ -1,0 +1,43 @@
+services:
+  nexo-api:
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+    working_dir: /workspace
+    command: >
+      sh -c "dotnet restore NexoCommerceAI.sln &&
+             dotnet watch --project src/NexoCommerceAI.API/NexoCommerceAI.API.csproj run --urls http://0.0.0.0:8080"
+    volumes:
+      - ./:/workspace
+      - nuget_cache:/root/.nuget/packages
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+      DOTNET_WATCH_RESTART_ON_RUDE_EDIT: "1"
+
+  integration-tests:
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+    container_name: nexo-integration-tests
+    profiles:
+      - integration-tests
+    working_dir: /workspace
+    command: >
+      sh -c "dotnet restore NexoCommerceAI.sln &&
+             dotnet test tests/NexoCommerceAI.IntegrationTests/NexoCommerceAI.IntegrationTests.csproj
+             --configuration Release
+             --logger 'console;verbosity=normal'"
+    volumes:
+      - ./:/workspace
+      - nuget_cache:/root/.nuget/packages
+    environment:
+      ASPNETCORE_ENVIRONMENT: Testing
+      ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__Redis: redis:6379,password=${REDIS_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - nexo-net
+
+volumes:
+  nuget_cache:

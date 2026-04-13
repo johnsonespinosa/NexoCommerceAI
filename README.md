@@ -1,5 +1,9 @@
 # 🚀 NexoCommerceAI – AI-Powered E-commerce Backend
 
+[![CI](https://github.com/johnsonespinosa/NexoCommerceAI/actions/workflows/ci.yml/badge.svg)](https://github.com/johnsonespinosa/NexoCommerceAI/actions/workflows/ci.yml)
+[![CD Docker](https://github.com/johnsonespinosa/NexoCommerceAI/actions/workflows/cd-docker.yml/badge.svg)](https://github.com/johnsonespinosa/NexoCommerceAI/actions/workflows/cd-docker.yml)
+[![Deploy Azure Web App](https://github.com/johnsonespinosa/NexoCommerceAI/actions/workflows/deploy-azure-webapp.yml/badge.svg)](https://github.com/johnsonespinosa/NexoCommerceAI/actions/workflows/deploy-azure-webapp.yml)
+
 A production-ready e-commerce backend built with **Clean Architecture**, **CQRS**, and **AI-powered recommendations**.
 
 This project simulates a real-world scalable system, including authentication, payments, caching, and intelligent product recommendations.
@@ -140,3 +144,46 @@ The system includes a behavior-based recommendation engine:
 
 ```bash
 docker-compose up --build
+```
+
+---
+
+# 🚀 Release Flow (Tags)
+
+This repository uses Git tags to trigger Docker image releases to GHCR.
+
+### Release a version
+
+```bash
+git checkout main
+git pull
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+When pushing a tag like `v1.0.0`, the workflow `cd-docker.yml` publishes a versioned image.
+
+### Docker images
+
+- Registry: `ghcr.io/johnsonespinosa/NexoCommerceAI`
+- Tags generated automatically:
+  - Branch name
+  - Git tag (for example `v1.0.0`)
+  - Commit SHA
+  - `latest` (default branch only)
+
+---
+
+# ☁️ Deployment (Azure Web App for Containers)
+
+A deployment workflow is included in `.github/workflows/deploy-azure-webapp.yml`.
+
+### Required GitHub secrets
+
+- `AZURE_WEBAPP_NAME` -> your Azure Web App name
+- `AZURE_WEBAPP_PUBLISH_PROFILE` -> publish profile XML from Azure
+
+### Deploy options
+
+- Manual: run the workflow from the Actions tab (`workflow_dispatch`)
+- Automatic: push a tag `v*` after the Docker image is built
