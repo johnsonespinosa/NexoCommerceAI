@@ -1,0 +1,62 @@
+changelog:
+  exclude:
+    labels:
+      - skip-changelog
+      - duplicate
+      - invalid
+      - question
+      - wontfix
+    authors:
+      - dependabot
+
+  categories:
+    - title: "Breaking Changes"
+      labels:
+        - breaking-change
+        - breaking
+
+    - title: "Features"
+      labels:
+        - feature
+        - enhancement
+
+    - title: "Bug Fixes"
+      labels:
+        - bug
+        - bugfix
+        - fix
+
+    - title: "Performance"
+      labels:
+        - perf
+        - performance
+
+    - title: "Security"
+      labels:
+        - security
+
+    - title: "Documentation"
+      labels:
+        - docs
+        - documentation
+
+    - title: "Tests"
+      labels:
+        - test
+        - tests
+
+    - title: "CI/CD"
+      labels:
+        - ci
+        - cd
+        - devops
+
+    - title: "Maintenance"
+      labels:
+        - chore
+        - refactor
+        - dependencies
+
+    - title: "Other Changes"
+      labels:
+        - "*"
