@@ -1,0 +1,63 @@
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace NexoCommerceAI.Infrastructure.Persistence.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddAuditLogSystem : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.CreateTable(
+                name: "audit_logs",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    EntityType = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
+                    EntityId = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Action = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    OldValues = table.Column<string>(type: "text", nullable: true),
+                    NewValues = table.Column<string>(type: "text", nullable: true),
+                    ChangedBy = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    ChangedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IpAddress = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: true),
+                    UserAgent = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    CorrelationId = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_audit_logs", x => x.Id);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_audit_logs_ChangedAt",
+                table: "audit_logs",
+                column: "ChangedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_audit_logs_EntityId",
+                table: "audit_logs",
+                column: "EntityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_audit_logs_EntityType",
+                table: "audit_logs",
+                column: "EntityType");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_audit_logs_EntityType_EntityId_ChangedAt",
+                table: "audit_logs",
+                columns: new[] { "EntityType", "EntityId", "ChangedAt" });
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "audit_logs");
+        }
+    }
+}

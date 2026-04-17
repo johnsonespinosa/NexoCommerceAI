@@ -1,0 +1,27 @@
+using FluentValidation;
+using MediatR;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace NexoCommerceAI.Application;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddApplication(this IServiceCollection services)
+    {
+        var assembly = typeof(DependencyInjection).Assembly;
+
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
+
+        // Register FluentValidation validators from this assembly
+        services.AddValidatorsFromAssembly(assembly);
+
+        // Register pipeline behaviors - Validation first
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(Pipeline.ValidationBehavior<,>));
+        // Register audit/correlation behavior
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(Common.Behaviors.AuditCorrelationBehavior<,>));
+
+        // Optionally register other pipeline behaviors here (e.g., logging, performance)
+
+        return services;
+    }
+}

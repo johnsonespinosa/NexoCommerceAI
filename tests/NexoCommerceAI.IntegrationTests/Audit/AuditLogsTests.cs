@@ -1,0 +1,49 @@
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using NexoCommerceAI.API.Contracts.Products;
+using NexoCommerceAI.Infrastructure.Persistence;
+using System.Net.Http.Json;
+
+namespace NexoCommerceAI.IntegrationTests.Audit;
+
+public class AuditLogsTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+{
+    private readonly WebApplicationFactory<Program> _factory = factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                // replace DbContext with in-memory for tests
+                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+                if (descriptor != null) services.Remove(descriptor);
+
+                services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase("TestDb"));
+            });
+        });
+
+    [Fact]
+    public async Task CreateProduct_CreatesAuditLog()
+    {
+        var client = _factory.CreateClient();
+
+        var request = new CreateProductRequest(
+            Name: "IT Product",
+            CategoryId: Guid.NewGuid(),
+            Description: "Desc",
+            Price: 10m,
+            CompareAtPrice: null,
+            Sku: "ITSKU",
+            Stock: 10,
+            IsFeatured: false);
+
+        var response = await client.PostAsJsonAsync("/api/products", request);
+        response.EnsureSuccessStatusCode();
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var audits = await db.AuditLogs.ToListAsync();
+
+        Assert.NotEmpty(audits);
+        Assert.Contains(audits, a => a.EntityType == "Product" && a.Action == NexoCommerceAI.Domain.Entities.AuditAction.Create);
+    }
+}
