@@ -1,0 +1,18 @@
+﻿using MediatR;
+using Microsoft.AspNetCore.Routing;
+using NexoCommerceAI.Application.Products.DeleteProduct;
+
+namespace NexoCommerceAI.API.Endpoints.Products;
+
+internal sealed class DeleteProductEndpoint : NexoCommerceAI.API.Endpoints.IEndpoint
+{
+    public void MapEndpoint(IEndpointRouteBuilder app)
+    {
+        app.MapDelete("/api/products/{id:guid}", (Guid id, ISender sender, CancellationToken cancellationToken) =>
+        {
+            return sender.Send(new DeleteProductCommand(id), cancellationToken)
+                .ContinueWith<IResult>(t => t.IsCompletedSuccessfully ? t.Result.ToNoContent() : Results.Problem());
+        })
+        .WithTags(NexoCommerceAI.API.Endpoints.Tags.Products);
+    }
+}

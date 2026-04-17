@@ -1,0 +1,6 @@
+﻿using NexoCommerceAI.Application.DTOs;
+using NexoCommerceAI.Application.Common.Interfaces;
+
+namespace NexoCommerceAI.Application.Products.Queries.GetProductAuditLogs;
+
+public sealed record GetProductAuditLogsQuery(string EntityType, string EntityId) : IQuery<IReadOnlyList<AuditLogDto>>;

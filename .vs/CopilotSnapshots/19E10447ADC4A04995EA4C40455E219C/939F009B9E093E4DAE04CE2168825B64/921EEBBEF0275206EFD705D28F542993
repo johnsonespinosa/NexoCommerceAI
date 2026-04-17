@@ -1,0 +1,8 @@
+﻿using System;
+
+namespace NexoCommerceAI.Domain.Attributes;
+
+[AttributeUsage(AttributeTargets.Property)]
+public sealed class IgnoreAuditAttribute : Attribute
+{
+}

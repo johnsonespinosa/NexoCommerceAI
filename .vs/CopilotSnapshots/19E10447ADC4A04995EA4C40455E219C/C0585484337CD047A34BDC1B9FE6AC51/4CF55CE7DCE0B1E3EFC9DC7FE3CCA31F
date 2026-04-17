@@ -1,0 +1,54 @@
+﻿using Microsoft.AspNetCore.Http;
+using NexoCommerceAI.Application.Common.Interfaces;
+
+namespace NexoCommerceAI.Infrastructure.Services;
+
+internal sealed class CurrentUserService : ICurrentUserService
+{
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public CurrentUserService(IHttpContextAccessor httpContextAccessor)
+    {
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    public string? GetCurrentUserId()
+    {
+        var user = _httpContextAccessor.HttpContext?.User;
+        if (user == null) return "System";
+        return user.FindFirst("sub")?.Value ?? user.FindFirst("nameidentifier")?.Value ?? "System";
+    }
+
+    public string? GetCurrentUserName()
+    {
+        var user = _httpContextAccessor.HttpContext?.User;
+        return user?.Identity?.Name ?? "System";
+    }
+
+    public string? GetCurrentUserEmail()
+    {
+        var user = _httpContextAccessor.HttpContext?.User;
+        return user?.FindFirst("email")?.Value;
+    }
+
+    public string? GetCurrentIpAddress()
+    {
+        var ctx = _httpContextAccessor.HttpContext;
+        if (ctx == null) return null;
+        return ctx.Connection?.RemoteIpAddress?.ToString();
+    }
+
+    public string? GetCurrentUserAgent()
+    {
+        var ctx = _httpContextAccessor.HttpContext;
+        return ctx?.Request?.Headers["User-Agent"].ToString();
+    }
+
+    public Guid? GetCorrelationId()
+    {
+        var ctx = _httpContextAccessor.HttpContext;
+        if (ctx == null) return null;
+        if (Guid.TryParse(ctx.Request.Headers["X-Correlation-Id"].FirstOrDefault(), out var guid)) return guid;
+        return null;
+    }
+}

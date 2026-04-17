@@ -1,0 +1,14 @@
+﻿using NexoCommerceAI.Domain.Common;
+
+namespace NexoCommerceAI.Domain.Entities;
+
+public sealed class AuditLog : BaseEntity
+{
+    public string TableName { get; set; } = string.Empty;
+    public string Action { get; set; } = string.Empty; // Added, Modified, Deleted
+    public string KeyValues { get; set; } = string.Empty; // JSON
+    public string? OldValues { get; set; } // JSON
+    public string? NewValues { get; set; } // JSON
+    public string? UserId { get; set; }
+    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+}

@@ -1,0 +1,48 @@
+﻿using NexoCommerceAI.Application.Abstractions;
+using NexoCommerceAI.Domain.Entities;
+
+namespace NexoCommerceAI.UnitTests.Products.TestHelpers;
+
+internal sealed class InMemoryProductRepository : IProductRepository
+{
+    private readonly List<Product> _items = new();
+
+    public Task AddAsync(Product product, CancellationToken cancellationToken = default)
+    {
+        _items.Add(product);
+        return Task.CompletedTask;
+    }
+
+    public Task<Product?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(_items.SingleOrDefault(p => p.Id == id));
+    }
+
+    public Task<bool> ExistsBySkuAsync(string sku, Guid? excludingProductId = null, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(_items.Any(p => p.Sku == sku && (!excludingProductId.HasValue || p.Id != excludingProductId.Value)));
+    }
+
+    public Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
+
+    // For tests
+    public IReadOnlyList<Product> Items => _items;
+}
+
+internal sealed class InMemoryCategoryRepository : ICategoryRepository
+{
+    private readonly HashSet<Guid> _ids = new();
+
+    public InMemoryCategoryRepository(params Guid[] ids)
+    {
+        foreach (var id in ids) _ids.Add(id);
+    }
+
+    public Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(_ids.Contains(id));
+    }
+}

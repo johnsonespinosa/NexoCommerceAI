@@ -1,0 +1,31 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using NexoCommerceAI.Application.Abstractions;
+using NexoCommerceAI.Infrastructure.Persistence;
+using NexoCommerceAI.Infrastructure.Persistence.Repositories;
+
+namespace NexoCommerceAI.Infrastructure;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string postgresConnectionString, bool useInMemoryDatabase = false, string? inMemoryDatabaseName = null)
+    {
+        // Register IUserProvider and DbContext interceptors
+        services.AddScoped<IUserProvider, AuditSaveChangesInterceptor>();
+        services.AddScoped<AuditSaveChangesInterceptor>();
+
+        if (useInMemoryDatabase)
+        {
+            services.AddDbContext<AppDbContext>(options =>
+                options.UseInMemoryDatabase(inMemoryDatabaseName ?? "NexoCommerceAI"));
+        }
+        else
+        {
+            services.AddDbContext<AppDbContext>(options =>
+                options.UseNpgsql(postgresConnectionString));
+        }
+        services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
+        return services;
+    }
+}

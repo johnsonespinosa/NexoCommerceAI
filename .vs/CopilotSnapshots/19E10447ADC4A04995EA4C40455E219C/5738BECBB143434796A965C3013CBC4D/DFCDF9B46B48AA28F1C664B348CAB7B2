@@ -1,0 +1,31 @@
+﻿using MediatR;
+using NexoCommerceAI.API.Common;
+using NexoCommerceAI.API.Contracts.Products;
+using NexoCommerceAI.Application.Products.CreateProduct;
+
+namespace NexoCommerceAI.API.Endpoints.Products;
+
+internal sealed class CreateProductEndpoint : IEndpoint
+{
+    public void MapEndpoint(IEndpointRouteBuilder app)
+    {
+        app.MapPost("/api/products", async (CreateProductRequest request, ISender sender, CancellationToken cancellationToken) =>
+        {
+            var validation = RequestValidation.Validate(request);
+            if (validation is not null) return validation;
+
+            var result = await sender.Send(new CreateProductCommand(
+                Name: request.Name,
+                CategoryId: request.CategoryId,
+                Description: request.Description,
+                Price: request.Price,
+                CompareAtPrice: request.CompareAtPrice,
+                Sku: request.Sku,
+                Stock: request.Stock,
+                IsFeatured: request.IsFeatured), cancellationToken);
+
+            return result.ToCreated(value => $"/api/products/{value.Id}");
+        })
+        .WithTags(NexoCommerceAI.API.Endpoints.Tags.Products);
+    }
+}

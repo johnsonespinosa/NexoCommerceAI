@@ -1,0 +1,84 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using NexoCommerceAI.Domain.Entities;
+using System.Text.Json;
+
+namespace NexoCommerceAI.Infrastructure.Persistence;
+
+internal sealed class AuditSaveChangesInterceptor(IUserProvider userProvider) : SaveChangesInterceptor
+{
+    private readonly IUserProvider _userProvider = userProvider;
+
+    public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
+    {
+        var context = eventData.Context;
+        if (context == null) return base.SavingChanges(eventData, result);
+
+        var auditEntries = new List<AuditEntry>();
+
+        foreach (var entry in context.ChangeTracker.Entries().Where(e => e.Entity is not AuditLog && e.State != EntityState.Detached && e.State != EntityState.Unchanged))
+        {
+            var auditEntry = new AuditEntry { Entry = entry, TableName = entry.Entity.GetType().Name };
+
+            foreach (var property in entry.Properties)
+            {
+                string propName = property.Metadata.Name;
+                if (property.Metadata.IsPrimaryKey())
+                {
+                    auditEntry.KeyValues[propName] = property.CurrentValue;
+                    continue;
+                }
+
+                switch (entry.State)
+                {
+                    case EntityState.Added:
+                        auditEntry.Action = "Added";
+                        auditEntry.NewValues[propName] = property.CurrentValue;
+                        break;
+                    case EntityState.Deleted:
+                        auditEntry.Action = "Deleted";
+                        auditEntry.OldValues[propName] = property.OriginalValue;
+                        break;
+                    case EntityState.Modified:
+                        if (property.IsModified)
+                        {
+                            auditEntry.Action = "Modified";
+                            auditEntry.OldValues[propName] = property.OriginalValue;
+                            auditEntry.NewValues[propName] = property.CurrentValue;
+                        }
+                        break;
+                }
+            }
+
+            auditEntry.UserId = _userProvider?.GetUserId();
+            auditEntries.Add(auditEntry);
+        }
+
+        // Save audit entries as AuditLog entities
+        if (auditEntries.Count != 0)
+        {
+            foreach (var audit in auditEntries)
+            {
+                var auditLog = new AuditLog
+                {
+                    TableName = audit.TableName,
+                    Action = audit.Action,
+                    KeyValues = JsonSerializer.Serialize(audit.KeyValues),
+                    OldValues = audit.OldValues.Any() ? JsonSerializer.Serialize(audit.OldValues) : null,
+                    NewValues = audit.NewValues.Any() ? JsonSerializer.Serialize(audit.NewValues) : null,
+                    UserId = audit.UserId,
+                    Timestamp = audit.Timestamp
+                };
+
+                context.Set<AuditLog>().Add(auditLog);
+            }
+        }
+
+        return base.SavingChanges(eventData, result);
+    }
+
+    public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
+    {
+        return new ValueTask<InterceptionResult<int>>(SavingChanges(eventData, result));
+    }
+}

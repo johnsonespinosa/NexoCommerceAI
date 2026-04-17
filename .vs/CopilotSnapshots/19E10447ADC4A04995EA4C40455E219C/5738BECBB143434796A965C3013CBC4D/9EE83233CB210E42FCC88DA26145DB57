@@ -1,0 +1,26 @@
+﻿using MediatR;
+using NexoCommerceAI.API.Common;
+using NexoCommerceAI.Application.Products.GetProducts;
+
+namespace NexoCommerceAI.API.Endpoints.Products;
+
+internal sealed class GetProductsEndpoint : IEndpoint
+{
+    public void MapEndpoint(IEndpointRouteBuilder app)
+    {
+        app.MapGet("/api/products", (
+            ISender sender,
+            int page = 1,
+            int pageSize = 20,
+            string? search = null,
+            Guid? categoryId = null,
+            string? sku = null,
+            bool? isFeatured = null,
+            CancellationToken cancellationToken = default) =>
+        {
+            return sender.Send(new GetProductsQuery(page, pageSize, search, categoryId, sku, isFeatured), cancellationToken)
+                .ContinueWith<IResult>(t => t.IsCompletedSuccessfully ? t.Result.ToOk() : Results.Problem());
+        })
+        .WithTags(Tags.Products);
+    }
+}
