@@ -1,0 +1,53 @@
+﻿using Microsoft.EntityFrameworkCore;
+using NexoCommerceAI.API.Endpoints;
+using NexoCommerceAI.API.Services;
+using NexoCommerceAI.Application;
+using NexoCommerceAI.Application.Common.Interfaces;
+using NexoCommerceAI.Infrastructure;
+using NexoCommerceAI.Infrastructure.Persistence;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOpenApi();
+builder.Services.AddHealthChecks();
+builder.Services.AddApplication();
+builder.Services.AddHttpContextAccessor();
+// CurrentUserService moved to Infrastructure; Infrastructure DI will register it
+// Register endpoints
+builder.Services.AddEndpoints(typeof(Program).Assembly);
+
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddInfrastructure(
+        builder.Configuration.GetConnectionString("Postgres")
+        ?? throw new InvalidOperationException("Connection string 'Postgres' is missing."));
+}
+
+var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    if (!app.Environment.IsEnvironment("Testing"))
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        dbContext.Database.Migrate();
+    }
+}
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+
+app.UseHttpsRedirection();
+app.MapHealthChecks("/health/live");
+app.MapHealthChecks("/health/ready");
+// Map endpoints from classes
+app.MapEndpoints();
+
+app.Run();
+
+public partial class Program { }

@@ -1,0 +1,150 @@
+﻿using MediatR;
+using Microsoft.EntityFrameworkCore;
+using NexoCommerceAI.API.Common;
+using NexoCommerceAI.API.Contracts.Products;
+using NexoCommerceAI.API.Services;
+using NexoCommerceAI.Application;
+using NexoCommerceAI.Application.Products.CreateProduct;
+using NexoCommerceAI.Application.Products.DeleteProduct;
+using NexoCommerceAI.Application.Products.GetProductById;
+using NexoCommerceAI.Application.Products.GetProducts;
+using NexoCommerceAI.Application.Products.UpdateProduct;
+using NexoCommerceAI.Infrastructure;
+using NexoCommerceAI.Infrastructure.Persistence;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOpenApi();
+builder.Services.AddHealthChecks();
+builder.Services.AddApplication();
+builder.Services.AddHttpContextAccessor();
+// Register user provider for auditing and the interceptor
+builder.Services.AddScoped<IUserProvider, HttpContextUserProvider>();
+// Register CurrentUserService for auditing and the interceptor (resolves ICurrentUserService)
+builder.Services.AddScoped<NexoCommerceAI.Application.Common.Interfaces.ICurrentUserService, NexoCommerceAI.Infrastructure.Services.CurrentUserService>();
+
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddInfrastructure(
+        builder.Configuration.GetConnectionString("Postgres")
+        ?? throw new InvalidOperationException("Connection string 'Postgres' is missing."));
+}
+
+var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    if (!app.Environment.IsEnvironment("Testing"))
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        dbContext.Database.Migrate();
+    }
+}
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+
+app.UseHttpsRedirection();
+app.MapHealthChecks("/health/live");
+app.MapHealthChecks("/health/ready");
+app.MapGet("/api/products", async (
+    ISender sender,
+    int page = 1,
+    int pageSize = 20,
+    string? search = null,
+    Guid? categoryId = null,
+    string? sku = null,
+    bool? isFeatured = null,
+    CancellationToken cancellationToken = default) =>
+{
+    var result = await sender.Send(new GetProductsQuery(page, pageSize, search, categoryId, sku, isFeatured), cancellationToken);
+    return result.ToOk();
+});
+
+app.MapGet("/api/products/{id:guid}", async (Guid id, ISender sender, CancellationToken cancellationToken) =>
+{
+    var result = await sender.Send(new GetProductByIdQuery(id), cancellationToken);
+    return result.ToOk();
+});
+
+app.MapPost("/api/products", async (CreateProductRequest request, ISender sender, CancellationToken cancellationToken) =>
+{
+    var validation = RequestValidation.Validate(request);
+    if (validation is not null)
+    {
+        return validation;
+    }
+
+    var result = await sender.Send(new CreateProductCommand(
+        Name: request.Name,
+        CategoryId: request.CategoryId,
+        Description: request.Description,
+        Price: request.Price,
+        CompareAtPrice: request.CompareAtPrice,
+        Sku: request.Sku,
+        Stock: request.Stock,
+        IsFeatured: request.IsFeatured), cancellationToken);
+
+    return result.ToCreated(value => $"/api/products/{value.Id}");
+});
+
+app.MapPut("/api/products/{id:guid}", async (Guid id, UpdateProductRequest request, ISender sender, CancellationToken cancellationToken) =>
+{
+    var validation = RequestValidation.Validate(request);
+    if (validation is not null)
+    {
+        return validation;
+    }
+
+    var result = await sender.Send(new UpdateProductCommand(
+        Id: id,
+        Name: request.Name,
+        CategoryId: request.CategoryId,
+        Description: request.Description,
+        Price: request.Price,
+        CompareAtPrice: request.CompareAtPrice,
+        Sku: request.Sku,
+        Stock: request.Stock,
+        IsFeatured: request.IsFeatured), cancellationToken);
+
+    return result.ToOk();
+});
+
+app.MapDelete("/api/products/{id:guid}", async (Guid id, ISender sender, CancellationToken cancellationToken) =>
+{
+    var result = await sender.Send(new DeleteProductCommand(id), cancellationToken);
+    return result.ToNoContent();
+});
+
+var summaries = new[]
+{
+    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+};
+
+app.MapGet("/weatherforecast", () =>
+{
+    var forecast =  Enumerable.Range(1, 5).Select(index =>
+        new WeatherForecast
+        (
+            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+            Random.Shared.Next(-20, 55),
+            summaries[Random.Shared.Next(summaries.Length)]
+        ))
+        .ToArray();
+    return forecast;
+})
+.WithName("GetWeatherForecast");
+
+app.Run();
+
+public partial class Program { }
+
+record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+{
+    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+}

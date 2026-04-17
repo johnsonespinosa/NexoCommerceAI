@@ -1,0 +1,164 @@
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Logging;
+using NexoCommerceAI.Application.Common.Interfaces;
+using NexoCommerceAI.Domain.Entities;
+
+namespace NexoCommerceAI.Infrastructure.Persistence.Interceptors;
+
+internal sealed class AuditSaveChangesInterceptor(ICurrentUserService currentUserService, TimeProvider timeProvider, ILogger<AuditSaveChangesInterceptor> logger) : SaveChangesInterceptor
+{
+    private readonly ICurrentUserService _currentUserService = currentUserService;
+    private readonly TimeProvider _timeProvider = timeProvider;
+    private readonly ILogger<AuditSaveChangesInterceptor> _logger = logger;
+    private readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
+
+    private bool IsAuditEntity(object entity) => entity is AuditLog;
+
+    private static bool IsIgnoredProperty(PropertyEntry prop)
+    {
+        var propInfo = prop.Metadata.PropertyInfo;
+        if (propInfo == null) return false;
+
+        var ignore = propInfo.GetCustomAttributes(typeof(NexoCommerceAI.Domain.Attributes.IgnoreAuditAttribute), true).Any();
+        return ignore;
+    }
+
+    public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
+    {
+        var context = eventData.Context;
+        if (context == null) return base.SavingChanges(eventData, result);
+
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        var audits = new List<AuditLog>();
+
+        foreach (var entry in context.ChangeTracker.Entries().Where(e => !IsAuditEntity(e.Entity) && e.State != EntityState.Detached && e.State != EntityState.Unchanged))
+        {
+            if (entry.Entity is not null && entry.Entity.GetType().Name == nameof(AuditLog)) continue;
+
+            // Set audit fields on BaseEntity if present
+            if (entry.Entity is NexoCommerceAI.Domain.Common.BaseEntity baseEntity)
+            {
+                switch (entry.State)
+                {
+                    case EntityState.Added:
+                        baseEntity.CreatedAt = now;
+                        baseEntity.CreatedBy = _currentUserService.GetCurrentUserEmail() ?? _currentUserService.GetCurrentUserName() ?? _currentUserService.GetCurrentUserId() ?? "System";
+                        break;
+                    case EntityState.Modified:
+                        baseEntity.UpdatedAt = now;
+                        baseEntity.UpdatedBy = _currentUserService.GetCurrentUserEmail() ?? _currentUserService.GetCurrentUserName() ?? _currentUserService.GetCurrentUserId() ?? "System";
+                        break;
+                }
+            }
+
+            // Build old/new dictionaries
+            var oldValues = new Dictionary<string, object?>();
+            var newValues = new Dictionary<string, object?>();
+
+            foreach (var prop in entry.Properties)
+            {
+                if (IsIgnoredProperty(prop)) continue;
+
+                var propName = prop.Metadata.Name;
+
+                if (prop.Metadata.IsPrimaryKey())
+                {
+                    // primary keys will be used as EntityId
+                    continue;
+                }
+
+                switch (entry.State)
+                {
+                    case EntityState.Added:
+                        newValues[propName] = prop.CurrentValue;
+                        break;
+                    case EntityState.Deleted:
+                        oldValues[propName] = prop.OriginalValue;
+                        break;
+                    case EntityState.Modified:
+                        if (prop.IsModified)
+                        {
+                            oldValues[propName] = prop.OriginalValue;
+                            newValues[propName] = prop.CurrentValue;
+                        }
+                        break;
+                }
+            }
+
+            // Detect soft-delete/restore via IsDeleted
+            var action = AuditAction.Update;
+            if (entry.Entity is NexoCommerceAI.Domain.Common.BaseEntity be)
+            {
+                var originalIsDeleted = entry.Property(nameof(be.IsDeleted)).OriginalValue as bool? ?? false;
+                var currentIsDeleted = be.IsDeleted;
+                if (!originalIsDeleted && currentIsDeleted) action = AuditAction.Delete;
+                if (originalIsDeleted && !currentIsDeleted) action = AuditAction.Restore;
+                if (entry.State == EntityState.Added) action = AuditAction.Create;
+                if (entry.State == EntityState.Deleted) action = AuditAction.Delete;
+            }
+            else
+            {
+                if (entry.State == EntityState.Added) action = AuditAction.Create;
+                if (entry.State == EntityState.Deleted) action = AuditAction.Delete;
+            }
+
+            // Build EntityId from primary key(s)
+            var key = new Dictionary<string, object?>();
+            foreach (var keyProp in entry.Properties.Where(p => p.Metadata.IsPrimaryKey()))
+            {
+                key[keyProp.Metadata.Name] = keyProp.CurrentValue ?? keyProp.OriginalValue;
+            }
+            var entityId = key.Count == 1 ? key.Values.First()?.ToString() ?? string.Empty : JsonSerializer.Serialize(key, _jsonOptions);
+
+            var changedBy = _currentUserService.GetCurrentUserEmail() ?? _currentUserService.GetCurrentUserName() ?? _currentUserService.GetCurrentUserId() ?? "System";
+            var ip = _currentUserService.GetCurrentIpAddress();
+            var ua = _currentUserService.GetCurrentUserAgent();
+            var correlation = _currentUserService.GetCorrelationId();
+
+            try
+            {
+                var oldJson = oldValues.Count > 0 ? JsonSerializer.Serialize(oldValues, _jsonOptions) : null;
+                var newJson = newValues.Count > 0 ? JsonSerializer.Serialize(newValues, _jsonOptions) : null;
+
+                var auditLog = AuditLog.CreateForUpdate(entry.Entity.GetType().Name, entityId, oldJson, newJson, changedBy ?? "System", now, ip, ua, correlation);
+                auditLog.ChangedAt = now;
+
+                switch (action)
+                {
+                    case AuditAction.Create:
+                        auditLog = AuditLog.CreateForCreate(entry.Entity.GetType().Name, entityId, newJson, changedBy ?? "System", now, ip, ua, correlation);
+                        break;
+                    case AuditAction.Delete:
+                        auditLog = AuditLog.CreateForDelete(entry.Entity.GetType().Name, entityId, oldJson, changedBy ?? "System", now, ip, ua, correlation);
+                        break;
+                    case AuditAction.Restore:
+                        auditLog = AuditLog.CreateForRestore(entry.Entity.GetType().Name, entityId, newJson, changedBy ?? "System", now, ip, ua, correlation);
+                        break;
+                }
+
+                audits.Add(auditLog);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create audit log for entity {EntityType} {EntityId}", entry.Entity.GetType().Name, entityId);
+            }
+        }
+
+        if (audits.Count != 0)
+        {
+            context.Set<AuditLog>().AddRange(audits);
+        }
+
+        return base.SavingChanges(eventData, result);
+    }
+
+    public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
+    {
+        // reuse synchronous implementation for now but keep async signature
+        var syncResult = SavingChanges(eventData, result);
+        return await new ValueTask<InterceptionResult<int>>(syncResult);
+    }
+}

@@ -1,0 +1,28 @@
+using Microsoft.EntityFrameworkCore;
+using NexoCommerceAI.Domain.Entities;
+
+namespace NexoCommerceAI.Infrastructure.Persistence;
+
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IEnumerable<Microsoft.EntityFrameworkCore.Diagnostics.ISaveChangesInterceptor> interceptors) : DbContext(options)
+{
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<Category> Categories => Set<Category>();
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        base.OnModelCreating(modelBuilder);
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        foreach (var interceptor in interceptors)
+        {
+            optionsBuilder.AddInterceptors(interceptor);
+        }
+
+        base.OnConfiguring(optionsBuilder);
+    }
+}

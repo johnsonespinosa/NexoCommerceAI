@@ -1,0 +1,31 @@
+﻿using MediatR;
+using Microsoft.AspNetCore.Routing;
+using NexoCommerceAI.API.Contracts.Products;
+using NexoCommerceAI.Application.Products.UpdateProduct;
+
+namespace NexoCommerceAI.API.Endpoints.Products;
+
+internal sealed class UpdateProductEndpoint : NexoCommerceAI.API.Endpoints.IEndpoint
+{
+    public void MapEndpoint(IEndpointRouteBuilder app)
+    {
+        app.MapPut("/api/products/{id:guid}", (Guid id, UpdateProductRequest request, ISender sender, CancellationToken cancellationToken) =>
+        {
+            var validation = NexoCommerceAI.API.Common.RequestValidation.Validate(request);
+            if (validation is not null) return Task.FromResult(validation);
+
+            return sender.Send(new UpdateProductCommand(
+                Id: id,
+                Name: request.Name,
+                CategoryId: request.CategoryId,
+                Description: request.Description,
+                Price: request.Price,
+                CompareAtPrice: request.CompareAtPrice,
+                Sku: request.Sku,
+                Stock: request.Stock,
+                IsFeatured: request.IsFeatured), cancellationToken)
+                .ContinueWith<IResult>(t => t.IsCompletedSuccessfully ? t.Result.ToOk() : Results.Problem());
+        })
+        .WithTags(NexoCommerceAI.API.Endpoints.Tags.Products);
+    }
+}

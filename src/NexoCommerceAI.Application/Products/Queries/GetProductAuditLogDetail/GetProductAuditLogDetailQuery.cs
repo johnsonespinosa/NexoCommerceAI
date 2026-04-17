@@ -1,0 +1,6 @@
+using NexoCommerceAI.Application.Abstractions.Messaging;
+using NexoCommerceAI.Application.DTOs;
+
+namespace NexoCommerceAI.Application.Products.Queries.GetProductAuditLogDetail;
+
+public sealed record GetProductAuditLogDetailQuery(Guid Id) : IQuery<AuditLogDto?>;
